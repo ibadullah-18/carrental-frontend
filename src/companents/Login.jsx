@@ -62,64 +62,49 @@ const Login = () => {
     }`
 
   return (
-     <div className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${isDarkmodeEnabled ? "bg-gray-900 text-white" : "bg-white text-black"}`}>
-      <form onSubmit={handleSubmit} className="w-[700px]">
-        <h2 className="text-4xl font-poppins font-semibold mb-6 text-center">Login</h2>
+<div className="min-h-screen flex items-center justify-center bg-white text-black">
+  <form onSubmit={handleSubmit} className="w-[700px]">
+    
+    <h2 className="text-4xl font-poppins font-semibold mb-6 text-center">
+      Login
+    </h2>
 
-        <input
-          type="email"
-          placeholder="Enter your email"
-          className={inputClass}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+    <input
+      type="email"
+      placeholder="Enter your email"
+      className={inputClass}
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      required
+    />
 
-        <input
-          type="password"
-          placeholder="Enter your password"
-          className={inputClass}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+    <input
+      type="password"
+      placeholder="Enter your password"
+      className={inputClass}
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      required
+    />
 
-        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+    {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
-        <Link
-          to="/register"
-          className={`mb-4 inline-block text-sm ${isDarkmodeEnabled ? "text-blue-400 hover:underline" : "text-blue-600 hover:underline"}`}
-        >
-          Don't have an account? Register
-        </Link>
+    <Link
+      to="/register"
+      className="mb-4 inline-block text-sm text-blue-600 hover:underline"
+    >
+      Don't have an account? Register
+    </Link>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`
-            w-full h-15 mt-2 rounded text-lg font-poppins font-semibold transition
-            flex items-center justify-center
-            ${isDarkmodeEnabled
-              ? "bg-yellow-500 text-black hover:bg-yellow-400"
-              : "bg-yellow-400 text-black hover:bg-yellow-500"
-            }
-  `}
-        >
-          {loading ? (
-            <div
-              className={`w-6 h-6 border-2 rounded-full animate-spin
-                ${isDarkmodeEnabled
-                  ? "border-black border-t-transparent"
-                  : "border-black border-t-transparent"
-                }`}
-            />
-          ) : (
-            "Login"
-          )}
-        </button>
+    <button
+      type="submit"
+      className="w-full h-15 mt-2 rounded text-lg font-poppins font-semibold transition flex items-center justify-center bg-yellow-400 text-black hover:bg-yellow-500"
+    >
+      Login
+    </button>
 
-      </form>
-    </div>
+  </form>
+</div>
   );
 };
 
