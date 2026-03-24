@@ -1,111 +1,132 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDarkmode } from "../stores/useDarkmode";
-import bgImage from "../assets/lexus-bg.png";
+import { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { useDarkmode } from "../stores/useDarkmode"
+import { setAccessToken, setRefreshToken } from "../stores/auth"
+import LexusBg from "../assets/lexus-bg.png"
+import Navbar from "./Navbar"
 
 const Login = () => {
-  const { isDarkmodeEnabled } = useDarkmode()
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+    const { isDarkmodeEnabled } = useDarkmode()
+    const navigate = useNavigate()
 
-  const navigate = useNavigate()
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
 
-    setLoading(true);
-    setError("");
+    const handleLogin = async (e) => {
+        e.preventDefault()
+        setError("")
+        setLoading(true)
 
-    try {
-      const res = await fetch("https://localhost:5248/api/Auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+        try {
+            const response = await fetch("http://localhost:5248/api/Auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                }),
+            })
 
-      const data = await res.json();
-      console.log("Login response:", data);
+            if (!response.ok) {
+                throw new Error("Email ve ya sifre sehvdir")
+            }
 
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
-      }
+            const data = await response.json()
 
-      alert("Login uğurludur");
+            const accessToken = data.accessToken || data.token
+            const refreshToken = data.refreshToken
 
-      // məsələn token qaytarırsa:
-      // localStorage.setItem("token", data.token);
+            if (!accessToken) {
+                throw new Error("Access token gelmedi")
+            }
 
-      setEmail("");
-      setPassword("");
-      navigate("/"); // login sonrası yönləndirmə
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+            setAccessToken(accessToken)
+
+            if (refreshToken) {
+                setRefreshToken(refreshToken)
+            }
+
+            navigate("/")
+            window.location.reload()
+        } catch (err) {
+            setError(err.message || "Login zamani xeta bas verdi")
+        } finally {
+            setLoading(false)
+        }
     }
-  };
 
+    return (
+      <>
+      <Navbar/>
+        <div
+            className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center px-4 relative"
+            style={{ backgroundImage: `url(${LexusBg})` }}
+        >
+            <div className="absolute inset-0 bg-black/50"></div>
 
+            <div
+                className={`relative z-10 w-full max-w-md rounded-3xl shadow-2xl p-8 border backdrop-blur-md ${
+                    isDarkmodeEnabled
+                        ? "bg-white/10 border-white/20 text-white"
+                        : "bg-black/20 border-white/20 text-white"
+                }`}
+            >
+                <h1 className="text-3xl font-bold text-center mb-6">Sign In</h1>
 
-   const inputClass = `
-    w-full h-15 p-4 mb-3 text-lg rounded outline-none transition
-    ${isDarkmodeEnabled
-      ? "bg-gray-800 text-white placeholder-gray-400 border border-gray-700 focus:border-yellow-400"
-      : "bg-white text-black placeholder-gray-500 border border-gray-300 focus:border-yellow-400"
-    }`
+                <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                    <div>
+                        <label className="block mb-2 text-white">Email</label>
+                        <input
+                            type="email"
+                            placeholder="Email daxil et"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400"
+                        />
+                    </div>
 
-  return (
-<div className="min-h-screen flex items-center justify-center bg-white text-black">
-  <form onSubmit={handleSubmit} className="w-[700px]">
-    
-    <h2 className="text-4xl font-poppins font-semibold mb-6 text-center">
-      Login
-    </h2>
+                    <div>
+                        <label className="block mb-2 text-white">Password</label>
+                        <input
+                            type="password"
+                            placeholder="Sifre daxil et"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400"
+                        />
+                    </div>
 
-    <input
-      type="email"
-      placeholder="Enter your email"
-      className={inputClass}
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      required
-    />
+                    {error && (
+                        <p className="text-red-400 text-sm">{error}</p>
+                    )}
 
-    <input
-      type="password"
-      placeholder="Enter your password"
-      className={inputClass}
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      required
-    />
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-yellow-400 text-black py-3 rounded-xl hover:bg-yellow-500 duration-200 disabled:opacity-50 font-semibold flex items-center justify-center"
+                    >
+                        {loading ? (
+                            <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                            "Sign In"
+                        )}
+                    </button>
+                </form>
 
-    {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+                <p className="text-center mt-5 text-white">
+                    Hesabin yoxdur?{" "}
+                    <Link to="/register" className="text-yellow-400 hover:underline">
+                        Register
+                    </Link>
+                </p>
+            </div>
+        </div>
+        </>
+    )
+}
 
-    <Link
-      to="/register"
-      className="mb-4 inline-block text-sm text-blue-600 hover:underline"
-    >
-      Don't have an account? Register
-    </Link>
-
-    <button
-      type="submit"
-      className="w-full h-15 mt-2 rounded text-lg font-poppins font-semibold transition flex items-center justify-center bg-yellow-400 text-black hover:bg-yellow-500"
-    >
-      Login
-    </button>
-
-  </form>
-</div>
-  );
-};
-
-export default Login;
+export default Login

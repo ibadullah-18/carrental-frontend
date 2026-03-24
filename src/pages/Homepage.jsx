@@ -1,87 +1,99 @@
 import { useEffect, useState } from "react";
+import { useDarkmode } from "../stores/useDarkmode";
+import Navbar from "../companents/Navbar";
+import Carcart from "../companents/Carcart";
+import Loading from "../companents/Loading";
 
 const Homepage = () => {
-  const [cars, setCars] = useState([]);
-  const [error, setError] = useState("");
+    const [cars, setCars] = useState([]);
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [visibleCount, setVisibleCount] = useState(9);
 
-  const getCars = async () => {
-    try {
-      const response = await fetch("http://localhost:5248/api/Cars");
+    const { isDarkmodeEnabled } = useDarkmode();
 
-      if (!response.ok) {
-        throw new Error("Serverden melumat gelmedi");
-      }
+    const getCars = async () => {
+        try {
+            const response = await fetch("http://localhost:5248/api/Cars");
 
-      const data = await response.json();
-      console.log("Gelen data:", data);
+            if (!response.ok) {
+                throw new Error("Serverden melumat gelmedi");
+            }
 
-      setCars(data);
-    } catch (err) {
-      console.log("Xeta:", err);
-      setError("Masinlari getirerken xeta bas verdi");
-    }
-  };
+            const data = await response.json();
+            console.log("Gelen data:", data);
 
-  useEffect(() => {
-    getCars();
-  }, []);
+            if (Array.isArray(data)) {
+                setCars(data);
+            } else if (Array.isArray(data.$values)) {
+                setCars(data.$values);
+            } else if (Array.isArray(data.items)) {
+                setCars(data.items);
+            } else if (Array.isArray(data.data)) {
+                setCars(data.data);
+            } else {
+                setCars([]);
+            }
+        } catch (err) {
+            console.log("Xeta:", err);
+            setError("Masinlari getirerken xeta bas verdi");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="min-h-screen bg-gray-100 px-6 py-10">
-      <h1 className="text-4xl font-bold text-center mb-10">
-        Welcome to Car Rental Service
-      </h1>
+    useEffect(() => {
+        getCars();
+    }, []);
 
-      {error && (
-        <p className="text-red-500 text-center mb-6">{error}</p>
-      )}
+    const handleLoadMore = () => {
+        setVisibleCount((prev) => prev + 9);
+    };
 
-      {cars.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {cars.map((car, index) => (
-            <div
-              key={car.id || index}
-              className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition"
-            >
-              {car.mainImageUrl || car.imageUrl ? (
-                <img
-                  src={car.mainImageUrl || car.imageUrl}
-                  alt={`${car.brand} ${car.model}`}
-                  className="w-full h-52 object-cover"
-                />
-              ) : (
-                <div className="w-full h-52 bg-gray-300 flex items-center justify-center text-gray-600 text-lg font-semibold">
-                  No Image
+    if (loading) return <Loading />;
+
+    if (error) {
+        return (
+            <div className={`w-full min-h-screen ${isDarkmodeEnabled ? "bg-gray-900 text-white" : "bg-white text-black"}`}>
+                <Navbar />
+                <div className="flex justify-center items-center mt-20 text-red-500 text-xl">
+                    {error}
                 </div>
-              )}
-
-              <div className="p-4">
-                <h2 className="text-xl font-bold mb-2">
-                  {car.brand} {car.model}
-                </h2>
-
-                <div className="space-y-1 text-gray-700 text-sm">
-                  <p><span className="font-semibold">Year:</span> {car.year}</p>
-                  <p><span className="font-semibold">Color:</span> {car.color}</p>
-                  <p><span className="font-semibold">Fuel:</span> {car.fuelType}</p>
-                  <p><span className="font-semibold">Transmission:</span> {car.transmission}</p>
-                  <p><span className="font-semibold">Location:</span> {car.location}</p>
-                  <p><span className="font-semibold">Mileage:</span> {car.mileage}</p>
-                  <p><span className="font-semibold">Description:</span> {car.description}</p>
-                </div>
-
-                <p className="text-green-600 font-bold text-lg mt-4">
-                  ${car.pricePerDay} / day
-                </p>
-              </div>
             </div>
-          ))}
+        );
+    }
+
+    return (
+        <div className={`w-full min-h-screen ${isDarkmodeEnabled ? "bg-gray-900 text-white" : "bg-white text-black"}`}>
+            <Navbar />
+
+        <div className="max-w-[1250px] mx-auto px-6 pt-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+                {cars.slice(0, visibleCount).map((car) => (
+                    <Carcart
+                        key={car.id || car.carId}
+                        car={car}
+                    />
+                ))}
+            </div>
+
+            {visibleCount < cars.length && (
+                <div className="flex justify-center mt-10">
+                    <button
+                        onClick={handleLoadMore}
+                        className="px-8 py-3 rounded-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition"
+                    >
+                        Load More
+                    </button>
+                </div>
+            )}
         </div>
-      ) : (
-        <p className="text-center text-xl">Hec bir masin tapilmadi</p>
-      )}
-    </div>
-  );
+
+            <div className="mt-20">
+                {/* <Footer /> */}
+            </div>
+        </div>
+    );
 };
 
 export default Homepage;

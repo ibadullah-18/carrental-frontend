@@ -1,4 +1,4 @@
-import { useDarkmode } from "../stores/darkmode"
+import { useDarkmode } from "../stores/useDarkmode"
 
 const Loading = () => {
     const { isDarkmodeEnabled } = useDarkmode()
