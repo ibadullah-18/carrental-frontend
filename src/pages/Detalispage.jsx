@@ -1,15 +1,15 @@
-import Login from "../companents/Login";
+import Details from "../companents/Detalis";
 import Navbar from "../companents/Navbar"
 import Footer from "../companents/Footer"
 
-const Loginpage = () => {
+const Detailspage = () => {
     return (
         <div>
             <Navbar />
-            <Login />
+            <Details />
             <Footer />
         </div>
     )
 }
 
-export default Loginpage
+export default Detailspage
