@@ -62,74 +62,87 @@ const Login = () => {
 
     return (
   <div
-    className="min-h-[calc(100vh-160px)] bg-cover bg-center bg-no-repeat flex items-center justify-center px-3 sm:px-4 md:px-6 py-8 sm:py-10 md:py-14 relative"
-    style={{ backgroundImage: `url(${LexusBg})` }}
-  >
-    <div className="absolute inset-0 bg-black/50"></div>
-
-    <div
-      className={`relative z-10 w-full max-w-[340px] sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 border backdrop-blur-md ${
-        isDarkmodeEnabled
-          ? "bg-white/10 border-white/20 text-white"
-          : "bg-black/20 border-white/20 text-white"
-      }`}
+      className="min-h-[calc(100vh-160px)] bg-cover bg-center bg-no-repeat flex items-center justify-center px-3 sm:px-4 md:px-6 py-8 sm:py-10 md:py-14 relative"
+      style={{ backgroundImage: `url(${LexusBg})` }}
     >
-      <h1 className="text-2xl sm:text-3xl font-bold text-center mb-5 sm:mb-6">
-        Sign In
-      </h1>
+      <div className="absolute inset-0 bg-black/50"></div>
 
-      <form onSubmit={handleLogin} className="flex flex-col gap-4">
-        <div>
-          <label className="block mb-2 text-white text-sm sm:text-base">
-            Email
-          </label>
-          <input
-            type="email"
-            placeholder="Email daxil et"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2.5 sm:p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400 text-sm sm:text-base"
-          />
-        </div>
+      <div
+        className={`relative z-10 w-full max-w-[340px] sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 border backdrop-blur-md ${
+          isDarkmodeEnabled
+            ? "bg-white/10 border-white/20 text-white"
+            : "bg-black/20 border-white/20 text-white"
+        }`}
+      >
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-5 sm:mb-6">
+          Sign In
+        </h1>
 
-        <div>
-          <label className="block mb-2 text-white text-sm sm:text-base">
-            Password
-          </label>
-          <input
-            type="password"
-            placeholder="Sifre daxil et"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2.5 sm:p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400 text-sm sm:text-base"
-          />
-        </div>
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <div>
+            <label className="block mb-2 text-white text-sm sm:text-base">
+              Email
+            </label>
+            <input
+              type="email"
+              placeholder="Email daxil et"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2.5 sm:p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400 text-sm sm:text-base"
+            />
+          </div>
 
-        {error && (
-          <p className="text-red-400 text-sm">{error}</p>
-        )}
+          <div>
+            <label className="block mb-2 text-white text-sm sm:text-base">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="Sifre daxil et"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2.5 sm:p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400 text-sm sm:text-base"
+            />
+          </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-yellow-400 text-black py-2.5 sm:py-3 rounded-xl hover:bg-yellow-500 duration-200 disabled:opacity-50 font-semibold flex items-center justify-center text-sm sm:text-base"
-        >
-          {loading ? (
-            <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            "Sign In"
+          {error && (
+            <p className="text-red-400 text-sm">{error}</p>
           )}
-        </button>
-      </form>
 
-      <p className="text-center mt-4 sm:mt-5 text-white text-sm sm:text-base">
-        Hesabin yoxdur?{" "}
-        <Link to="/register" className="text-yellow-400 hover:underline">
-          Register
-        </Link>
-      </p>
+          <button
+            type="submit"
+            disabled={loading}
+            className="
+              group relative overflow-hidden
+              w-full bg-yellow-400 text-black py-2.5 sm:py-3 rounded-xl
+              hover:bg-yellow-500 duration-200 disabled:opacity-50
+              font-semibold flex items-center justify-center
+              shadow-md hover:shadow-xl
+              hover:-translate-y-1 active:translate-y-0
+              transition-all duration-300 ease-in-out
+            "
+          >
+            <span className="relative z-10 flex items-center justify-center">
+              {loading ? (
+                <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                "Sign In"
+              )}
+            </span>
+            {!loading && (
+              <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/30 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
+            )}
+          </button>
+        </form>
+
+        <p className="text-center mt-4 sm:mt-5 text-white text-sm sm:text-base">
+          Hesabin yoxdur?{" "}
+          <Link to="/register" className="text-yellow-400 hover:underline">
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
-  </div>
     )
 }
 
