@@ -136,7 +136,7 @@ const Login = () => {
         </form>
 
         <p className="text-center mt-4 sm:mt-5 text-white text-sm sm:text-base">
-          Hesabin yoxdur?{" "}
+          don't you have an account?{" "}
           <Link to="/register" className="text-yellow-400 hover:underline">
             Register
           </Link>

@@ -1,17 +1,17 @@
-import Details from "../companents/Detalis";
+import Favorite from "../companents/Favorite";
 import Navbar from "../companents/Navbar"
 import Footer from "../companents/Footer"
-import Info from "../companents/Info";  
+import Info from "../companents/Info";
 
-const Detailspage = () => {
+const Favoritepage = () => {
     return (
         <div>
             <Navbar />
-            <Details />
+            <Favorite />
             <Info />
             <Footer />
         </div>
     )
 }
 
-export default Detailspage
+export default Favoritepage

@@ -6,6 +6,7 @@ import Loading from "../companents/Loading";
 import Footer from "../companents/Footer";
 import Filter from "../companents/Filter";
 import BMW from "../assets/BMW.png";
+import Info from "../companents/Info";
 
 
 const Homepage = () => {
@@ -248,8 +249,9 @@ const Homepage = () => {
           </div>
         )}
       </div>
+      <Info />
 
-      <div className="mt-14 sm:mt-16 lg:mt-20">
+      <div>
         <Footer />
       </div>
     </div>

@@ -3,10 +3,16 @@ import { useDarkmode } from "../stores/useDarkmode"
 import defaultImage from "../assets/download.png"
 import { getAccessToken, getUserIdFromToken } from "../stores/auth"
 
-const Carcart = ({ car }) => {
+const Carcart = ({
+    car,
+    showFavoriteButton = false,
+    isFavorite = false,
+    onFavoriteClick = null,
+    favoriteLoading = false
+}) => {
     const { isDarkmodeEnabled } = useDarkmode()
 
-    const carId = car.id || car.carId
+    const carId = car.carId || car.id
     const token = getAccessToken()
 
     const currentUserId = getUserIdFromToken()
@@ -23,6 +29,7 @@ const Carcart = ({ car }) => {
     return (
         <div
             className={`
+                relative
                 w-full max-w-[170px] sm:max-w-[260px] lg:max-w-[360px]
                 rounded-[20px] sm:rounded-[24px] lg:rounded-[28px]
                 p-2 sm:p-3 border transition duration-300
@@ -34,6 +41,56 @@ const Carcart = ({ car }) => {
                 }
             `}
         >
+            <style>
+    {`
+        @keyframes softHeartBeat {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.08); }
+            50% { transform: scale(1.16); }
+            75% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+    `}
+</style>
+
+           {showFavoriteButton && (
+    <button
+        type="button"
+        onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (onFavoriteClick) {
+                onFavoriteClick(car.carId || carId)
+            }
+        }}
+        disabled={favoriteLoading}
+        className={`
+            group
+            absolute top-4 right-4 z-20
+            w-11 h-11 sm:w-12 sm:h-12
+            rounded-full flex items-center justify-center
+            backdrop-blur-md shadow-md border transition-all duration-300
+            hover:-translate-y-1
+            ${
+                isDarkmodeEnabled
+                    ? "bg-[#111111]/80 border-white/10 hover:bg-[#1b1b1b]"
+                    : "bg-white/90 border-black/10 hover:bg-white"
+            }
+            ${favoriteLoading ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
+        `}
+    >
+        <span className="absolute inset-0 rounded-full bg-red-500/10 scale-0 group-hover:scale-100 transition duration-300"></span>
+
+        <svg
+            viewBox="0 0 24 24"
+            className="relative z-10 w-5 h-5 sm:w-6 sm:h-6 text-red-500 transition duration-300 group-hover:animate-[softHeartBeat_0.9s_ease-in-out_infinite]"
+            fill="currentColor"
+        >
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+    </button>
+)}
+
             <Link to={`/details/${carId}`} className="block">
                 <div className="w-full h-[120px] sm:h-[180px] lg:h-[230px] rounded-[16px] sm:rounded-[20px] lg:rounded-[22px] overflow-hidden bg-gray-200">
                     <img
