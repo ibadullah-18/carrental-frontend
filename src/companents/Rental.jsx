@@ -1,27 +1,60 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import Navbar from "./Navbar"
 import Footer from "./Footer"
 import { useDarkmode } from "../stores/useDarkmode"
 import { getAccessToken } from "../stores/auth"
 import defaultImage from "../assets/download.png"
+import { REGION_OPTIONS } from "../data/regions"
+
 
 const Rental = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const { isDarkmodeEnabled } = useDarkmode()
+
+    const rentalPrefill = location.state?.rentalPrefill
+
+    const formatDateForInput = (dateValue) => {
+        if (!dateValue) return ""
+
+        try {
+            const date = new Date(dateValue)
+
+            if (isNaN(date.getTime())) return ""
+
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, "0")
+            const day = String(date.getDate()).padStart(2, "0")
+            const hours = String(date.getHours()).padStart(2, "0")
+            const minutes = String(date.getMinutes()).padStart(2, "0")
+
+            return `${year}-${month}-${day}T${hours}:${minutes}`
+        } catch {
+            return ""
+        }
+    }
 
     const [car, setCar] = useState(null)
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
-
-    const [startDate, setStartDate] = useState("")
-    const [endDate, setEndDate] = useState("")
-    const [pickupLocation, setPickupLocation] = useState("")
-    const [returnLocation, setReturnLocation] = useState("")
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
+    const [startDate, setStartDate] = useState(
+        formatDateForInput(rentalPrefill?.startDate)
+    )
+    const [endDate, setEndDate] = useState(
+        formatDateForInput(rentalPrefill?.endDate)
+    )
+    const [pickupLocation, setPickupLocation] = useState(
+        rentalPrefill?.pickupLocation || ""
+    )
+    const [returnLocation, setReturnLocation] = useState(
+        rentalPrefill?.returnLocation || ""
+    )
 
     const token = getAccessToken()
 
@@ -46,8 +79,15 @@ const Rental = () => {
                 console.log("Car details:", data)
 
                 setCar(data)
-                setPickupLocation(data.location || "")
-                setReturnLocation(data.location || "")
+
+                if (!rentalPrefill?.pickupLocation) {
+                    setPickupLocation(data.location || "")
+                }
+
+                if (!rentalPrefill?.returnLocation) {
+                    setReturnLocation(data.location || "")
+                }
+
                 setSelectedImageIndex(0)
             } catch (err) {
                 setError(err.message || "Xeta bas verdi")
@@ -57,7 +97,27 @@ const Rental = () => {
         }
 
         getCarById()
-    }, [id, token, navigate])
+    }, [id, token, navigate, rentalPrefill])
+
+    useEffect(() => {
+        if (rentalPrefill) {
+            if (rentalPrefill.startDate) {
+                setStartDate(formatDateForInput(rentalPrefill.startDate))
+            }
+
+            if (rentalPrefill.endDate) {
+                setEndDate(formatDateForInput(rentalPrefill.endDate))
+            }
+
+            if (rentalPrefill.pickupLocation) {
+                setPickupLocation(rentalPrefill.pickupLocation)
+            }
+
+            if (rentalPrefill.returnLocation) {
+                setReturnLocation(rentalPrefill.returnLocation)
+            }
+        }
+    }, [rentalPrefill])
 
     const totalDays = useMemo(() => {
         if (!startDate || !endDate) return 0
@@ -107,6 +167,8 @@ const Rental = () => {
                 pickupLocation,
                 returnLocation
             }
+
+            console.log("Rental payload:", rentalData)
 
             const response = await fetch("http://localhost:5248/api/Rentals", {
                 method: "POST",
@@ -181,6 +243,12 @@ const Rental = () => {
             prev === imagesToShow.length - 1 ? 0 : prev + 1
         )
     }
+
+    const selectClassName = `w-full p-3 rounded-xl outline-none border ${
+        isDarkmodeEnabled
+            ? "bg-white/10 border-white/20 text-white"
+            : "bg-black/5 border-black/10 text-black"
+    }`
 
     if (loading) {
         return (
@@ -345,34 +413,36 @@ const Rental = () => {
                                 <label className="block mb-2 text-sm sm:text-base">
                                     Pickup Location
                                 </label>
-                                <input
-                                    type="text"
-                                    placeholder="Pickup location"
+                                <select
                                     value={pickupLocation}
                                     onChange={(e) => setPickupLocation(e.target.value)}
-                                    className={`w-full p-3 rounded-xl outline-none border ${
-                                        isDarkmodeEnabled
-                                            ? "bg-white/10 border-white/20 text-white placeholder-gray-300"
-                                            : "bg-black/5 border-black/10 text-black placeholder-gray-500"
-                                    }`}
-                                />
+                                    className={selectClassName}
+                                >
+                                    <option value="">Select the city/district where you will pick up the car</option>
+                                    {REGION_OPTIONS.map((region) => (
+                                        <option key={region} value={region}>
+                                            {region}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div>
                                 <label className="block mb-2 text-sm sm:text-base">
                                     Return Location
                                 </label>
-                                <input
-                                    type="text"
-                                    placeholder="Return location"
+                                <select
                                     value={returnLocation}
                                     onChange={(e) => setReturnLocation(e.target.value)}
-                                    className={`w-full p-3 rounded-xl outline-none border ${
-                                        isDarkmodeEnabled
-                                            ? "bg-white/10 border-white/20 text-white placeholder-gray-300"
-                                            : "bg-black/5 border-black/10 text-black placeholder-gray-500"
-                                    }`}
-                                />
+                                    className={selectClassName}
+                                >
+                                    <option value="">Select the city/district where you will deliver it</option>
+                                    {REGION_OPTIONS.map((region) => (
+                                        <option key={region} value={region}>
+                                            {region}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             {error && (

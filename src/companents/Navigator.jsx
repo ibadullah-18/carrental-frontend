@@ -7,6 +7,8 @@ import Rentalpage from "../pages/Rentalpage";
 import Detailspage from "../pages/Detalispage";
 import Registerpage from "../pages/Registerpage";
 import Favoritepage from "../pages/Favoritepage";
+import Basketpage from "../pages/Basketpage";
+import AddCarpage from "../pages/AddCarpage";
 
 const Navigator = () => {
   const { pathname } = useLocation();
@@ -23,6 +25,8 @@ const Navigator = () => {
       <Route path="/details/:id" element={<Detailspage />} />
       <Route path="/register" element={<Registerpage />} />
       <Route path="/favorite" element={<Favoritepage />} />
+      <Route path="/basket" element={<Basketpage />} />
+      <Route path="/add-car" element={<AddCarpage />} />
     </Routes>
   );
 };
