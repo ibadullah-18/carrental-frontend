@@ -62,183 +62,7 @@ const AddCar = () => {
         }
     }, [imagePreviewUrls])
 
-    const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    setError("")
-    setSuccess("")
-
-    if (!token) {
-        setError("You must be logged in")
-        return
-    }
-
-    if (
-        !brand ||
-        !model ||
-        !year ||
-        !pricePerDay ||
-        !fuelType ||
-        !transmission ||
-        !mileage ||
-        !description ||
-        !location ||
-        !color ||
-        !bodyType
-    ) {
-        setError("Please fill in all fields")
-        return
-    }
-
-    try {
-        setSubmitting(true)
-
-        const carPayload = {
-            brand,
-            model,
-            year: Number(year),
-            pricePerDay: Number(pricePerDay),
-            fuelType,
-            transmission,
-            mileage: Number(mileage),
-            description,
-            location,
-            color,
-            bodyType: Number(bodyType)
-        }
-
-        const createCarResponse = await fetch("http://localhost:5248/api/Cars", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify(carPayload)
-        })
-
-        if (!createCarResponse.ok) {
-            const errorText = await createCarResponse.text()
-            throw new Error(errorText || "Car could not be created")
-        }
-
-        let carId = null
-        const contentType = createCarResponse.headers.get("content-type") || ""
-
-        if (contentType.includes("application/json")) {
-            const createdCar = await createCarResponse.json()
-            console.log("Created car response:", createdCar)
-
-            carId =
-                createdCar?.id ||
-                createdCar?.carId ||
-                createdCar?.Id ||
-                createdCar?.data?.id ||
-                createdCar?.data?.carId ||
-                null
-        } else {
-            const responseText = await createCarResponse.text()
-            console.log("Create car text response:", responseText)
-
-            // Eger backend plain text qaytarirsa burda ID olmaya biler
-            // Location header-dan id goturmeye calisiriq
-            const locationHeader = createCarResponse.headers.get("location")
-            console.log("Location header:", locationHeader)
-
-            if (locationHeader) {
-                const parts = locationHeader.split("/")
-                carId = parts[parts.length - 1]
-            }
-        }
-
-        if (!carId) {
-            setSuccess("Car created successfully, but image upload requires returned car id")
-        } else if (images.length > 0) {
-            for (const image of images) {
-                let imageUploaded = false
-
-                // 1-ci variant
-                try {
-                    const formData = new FormData()
-                    formData.append("file", image)
-
-                    const imageResponse = await fetch(`http://localhost:5248/api/Cars/${carId}/images`, {
-                        method: "POST",
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        },
-                        body: formData
-                    })
-
-                    if (imageResponse.ok) {
-                        imageUploaded = true
-                    } else {
-                        const imageErrorText = await imageResponse.text()
-                        console.log("Upload with 'file' failed:", imageErrorText)
-                    }
-                } catch (err) {
-                    console.log("Upload error with 'file':", err)
-                }
-
-                // 2-ci variant
-                if (!imageUploaded) {
-                    try {
-                        const formData = new FormData()
-                        formData.append("image", image)
-
-                        const imageResponse = await fetch(`http://localhost:5248/api/Cars/${carId}/images`, {
-                            method: "POST",
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            },
-                            body: formData
-                        })
-
-                        if (imageResponse.ok) {
-                            imageUploaded = true
-                        } else {
-                            const imageErrorText = await imageResponse.text()
-                            console.log("Upload with 'image' failed:", imageErrorText)
-                        }
-                    } catch (err) {
-                        console.log("Upload error with 'image':", err)
-                    }
-                }
-
-                // 3-cu variant
-                if (!imageUploaded) {
-                    try {
-                        const formData = new FormData()
-                        formData.append("images", image)
-
-                        const imageResponse = await fetch(`http://localhost:5248/api/Cars/${carId}/images`, {
-                            method: "POST",
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            },
-                            body: formData
-                        })
-
-                        if (imageResponse.ok) {
-                            imageUploaded = true
-                        } else {
-                            const imageErrorText = await imageResponse.text()
-                            console.log("Upload with 'images' failed:", imageErrorText)
-                        }
-                    } catch (err) {
-                        console.log("Upload error with 'images':", err)
-                    }
-                }
-
-                if (!imageUploaded) {
-                    throw new Error("Car created, but image upload failed")
-                }
-            }
-
-            setSuccess("Car created successfully with images")
-        } else {
-            setSuccess("Car created successfully")
-        }
-
+    const resetForm = () => {
         setBrand("")
         setModel("")
         setYear("")
@@ -252,13 +76,89 @@ const AddCar = () => {
         setBodyType("")
         setImages([])
         setVisibleBrandCount(6)
-    } catch (err) {
-        console.log(err)
-        setError(err.message || "Something went wrong")
-    } finally {
-        setSubmitting(false)
     }
-}
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+
+        setError("")
+        setSuccess("")
+
+        if (!token) {
+            setError("You must be logged in")
+            return
+        }
+
+        if (
+            !brand ||
+            !model ||
+            !year ||
+            !pricePerDay ||
+            !fuelType ||
+            !transmission ||
+            !mileage ||
+            !description ||
+            !location ||
+            !color ||
+            !bodyType
+        ) {
+            setError("Please fill in all fields")
+            return
+        }
+
+        try {
+            setSubmitting(true)
+
+            const formData = new FormData()
+
+            formData.append("brand", brand)
+            formData.append("model", model)
+            formData.append("year", year)
+            formData.append("pricePerDay", pricePerDay)
+            formData.append("fuelType", fuelType)
+            formData.append("transmission", transmission)
+            formData.append("mileage", mileage)
+            formData.append("description", description)
+            formData.append("location", location)
+            formData.append("color", color)
+            formData.append("bodyType", bodyType)
+
+            for (const image of images) {
+                formData.append("images", image)
+            }
+
+            const response = await fetch("http://localhost:5248/api/Cars", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(errorText || "Car could not be created")
+            }
+
+            const contentType = response.headers.get("content-type") || ""
+
+            if (contentType.includes("application/json")) {
+                const createdCar = await response.json()
+                console.log("Created car:", createdCar)
+            } else {
+                const responseText = await response.text()
+                console.log("Create response:", responseText)
+            }
+
+            setSuccess("Car created successfully")
+            resetForm()
+        } catch (err) {
+            console.log(err)
+            setError(err.message || "Something went wrong")
+        } finally {
+            setSubmitting(false)
+        }
+    }
 
     const visibleBrands = CAR_BRANDS.slice(0, visibleBrandCount)
 
@@ -375,6 +275,9 @@ const AddCar = () => {
                                                 alt={`preview-${index}`}
                                                 className="w-full h-[140px] sm:h-[180px] object-cover"
                                             />
+                                            <div className="px-3 py-2 text-xs sm:text-sm truncate">
+                                                {index === 0 ? "Main image" : `Image ${index + 1}`}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
