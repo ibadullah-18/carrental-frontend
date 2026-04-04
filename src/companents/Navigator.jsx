@@ -9,6 +9,9 @@ import Registerpage from "../pages/Registerpage";
 import Favoritepage from "../pages/Favoritepage";
 import Basketpage from "../pages/Basketpage";
 import AddCarpage from "../pages/AddCarpage";
+import Profilepage from "../pages/Profilepage";
+import Mycarspage from "../pages/Maycarspage";
+import UpdateCarpage from "../pages/UpdateCarpage";
 
 const Navigator = () => {
   const { pathname } = useLocation();
@@ -27,6 +30,9 @@ const Navigator = () => {
       <Route path="/favorite" element={<Favoritepage />} />
       <Route path="/basket" element={<Basketpage />} />
       <Route path="/add-car" element={<AddCarpage />} />
+      <Route path="/profile" element={<Profilepage />} />
+      <Route path="/my-cars" element={<Mycarspage />} />
+      <Route path="/update-car/:id" element={<UpdateCarpage />} />
     </Routes>
   );
 };

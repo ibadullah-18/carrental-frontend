@@ -6,7 +6,6 @@ import Info from "../companents/Info";
 const Detailspage = () => {
     return (
         <div>
-            <Navbar />
             <Details />
             <Info />
             <Footer />

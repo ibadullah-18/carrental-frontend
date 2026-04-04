@@ -1,10 +1,16 @@
 import { useState } from 'react'
 import Navigator from './companents/Navigator'
+import Navbar from './companents/Navbar'
 
 const App = () => {
 
   return (
-    <Navigator />
+    <>
+    <Navbar />
+    <div className="pt-[75px]">
+      <Navigator />
+    </div>
+    </>
   )
 }
 

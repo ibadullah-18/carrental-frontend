@@ -5,8 +5,7 @@ import Info from '../companents/Info'
 
 const Rentalpage = () => {
   return (
-    <div> 
-        <Navbar />      
+    <div>     
         <Rental />
         <Info />
         <Footer />

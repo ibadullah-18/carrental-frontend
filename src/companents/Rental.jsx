@@ -3,7 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom"
 import Navbar from "./Navbar"
 import Footer from "./Footer"
 import { useDarkmode } from "../stores/useDarkmode"
-import { getAccessToken } from "../stores/auth"
+import { getAccessToken } from "../utils/auth"
+import { apiFetch } from "../utils/apiFetch"
 import defaultImage from "../assets/download.png"
 import { REGION_OPTIONS } from "../data/regions"
 
@@ -69,7 +70,9 @@ const Rental = () => {
                 setLoading(true)
                 setError("")
 
-                const response = await fetch(`http://localhost:5248/api/Cars/${id}`)
+                const response = await apiFetch(`/api/Cars/${id}`, {
+                    method: "GET"
+                })
 
                 if (!response.ok) {
                     throw new Error("Masin tapilmadi")
@@ -170,11 +173,10 @@ const Rental = () => {
 
             console.log("Rental payload:", rentalData)
 
-            const response = await fetch("http://localhost:5248/api/Rentals", {
+            const response = await apiFetch("/api/Rentals", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(rentalData)
             })

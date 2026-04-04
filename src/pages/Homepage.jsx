@@ -169,7 +169,6 @@ const Homepage = () => {
         isDarkmodeEnabled ? "bg-[#1a1a1a] text-white" : "bg-white text-black"
       }`}
     >
-      <Navbar />
 
       {/* HERO SECTION */}
       <section className="w-full bg-black overflow-hidden">

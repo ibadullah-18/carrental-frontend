@@ -5,7 +5,6 @@ import Footer from "../companents/Footer"
 const Registerpage = () => {
     return (
         <div>
-            <Navbar />
             <Register />
             <Footer />
         </div>

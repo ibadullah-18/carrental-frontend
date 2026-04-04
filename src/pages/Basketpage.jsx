@@ -6,7 +6,6 @@ import Info from "../companents/Info";
 const Basketpage = () => {
     return (
         <div>
-            <Navbar />
             <Basket />
             <Info />
             <Footer />

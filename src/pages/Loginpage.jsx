@@ -5,7 +5,6 @@ import Footer from "../companents/Footer"
 const Loginpage = () => {
     return (
         <div>
-            <Navbar />
             <Login />
             <Footer />
         </div>

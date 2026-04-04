@@ -6,7 +6,6 @@ import Info from "../companents/Info";
 const Favoritepage = () => {
     return (
         <div>
-            <Navbar />
             <Favorite />
             <Info />
             <Footer />

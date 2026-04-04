@@ -6,7 +6,6 @@ import Info from "../companents/Info";
 const AddCarpage = () => {
     return (
         <div>
-            <Navbar />
             <AddCar />
             <Info />
             <Footer />

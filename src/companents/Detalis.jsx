@@ -3,12 +3,11 @@ import { useNavigate, useParams } from "react-router-dom"
 import Navbar from "./Navbar"
 import Footer from "./Footer"
 import { useDarkmode } from "../stores/useDarkmode"
-import { getAccessToken } from "../stores/auth"
+import { getAccessToken } from "../utils/auth"
+import { apiFetch } from "../utils/apiFetch"
 import defaultImage from "../assets/download.png"
 
 const CAR_API_BASE = "http://localhost:5248/api/Cars"
-const FAVORITE_API = "http://localhost:5248/api/Favorites"
-const CART_API = "http://localhost:5248/api/Cart/items"
 
 const Details = () => {
     const { id } = useParams()
@@ -70,7 +69,9 @@ const Details = () => {
                 setLoading(true)
                 setError("")
 
-                const response = await fetch(`${CAR_API_BASE}/${id}`)
+                const response = await apiFetch(`/api/Cars/${id}`, {
+                    method: "GET"
+                })
 
                 if (!response.ok) {
                     throw new Error("Masin tapilmadi")
@@ -160,11 +161,10 @@ const Details = () => {
         try {
             setFavoriteLoading(true)
 
-            const response = await fetch(FAVORITE_API, {
+           const response = await apiFetch("/api/Favorites", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ carId: id })
             })
@@ -229,11 +229,10 @@ const Details = () => {
         try {
             setBasketLoading(true)
 
-            const response = await fetch(CART_API, {
+            const response = await apiFetch("/api/Cart/items", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     carId: id,
