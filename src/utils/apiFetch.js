@@ -6,19 +6,17 @@ import {
   clearTokens,
 } from "./auth";
 
-const BASE_URL = "http://localhost:5248";
+// Eyni domain ustunden isleyir:
+// /api -> nginx backend-e yonlendirir
+const BASE_URL = "";
 
 async function refreshAccessToken() {
   const accessToken = getAccessToken();
   const refreshToken = getRefreshToken();
 
-  console.log("Refresh başlayır...");
-  console.log("Köhnə access token:", accessToken);
-  console.log("Refresh token:", refreshToken);
-
   if (!refreshToken) {
     clearTokens();
-    throw new Error("Refresh token tapılmadı");
+    throw new Error("Refresh token tapilmadi");
   }
 
   const response = await fetch(`${BASE_URL}/api/Auth/refresh-token`, {
@@ -33,11 +31,10 @@ async function refreshAccessToken() {
   });
 
   const data = await response.json().catch(() => null);
-  console.log("Refresh response:", data);
 
   if (!response.ok) {
     clearTokens();
-    throw new Error(data?.message || "Refresh token yenilənmədi");
+    throw new Error(data?.message || data?.Message || "Refresh token yenilenmedi");
   }
 
   const newAccessToken = data?.accessToken || data?.token;
@@ -45,7 +42,7 @@ async function refreshAccessToken() {
 
   if (!newAccessToken) {
     clearTokens();
-    throw new Error("Yeni access token gəlmədi");
+    throw new Error("Yeni access token gelmedi");
   }
 
   setAccessToken(newAccessToken);
@@ -54,7 +51,6 @@ async function refreshAccessToken() {
     setRefreshToken(newRefreshToken);
   }
 
-  console.log("Yeni access token save olundu");
   return newAccessToken;
 }
 
@@ -85,8 +81,6 @@ export async function apiFetch(url, options = {}, retry = true) {
   });
 
   if (response.status === 401 && retry) {
-    console.log("401 gəldi:", url);
-
     try {
       const newAccessToken = await refreshAccessToken();
 
@@ -99,10 +93,7 @@ export async function apiFetch(url, options = {}, retry = true) {
         ...options,
         headers,
       });
-
-      console.log("Request yenidən göndərildi:", url);
     } catch (error) {
-      console.log("Refresh xətası:", error);
       clearTokens();
       window.location.href = "/login";
       throw error;
