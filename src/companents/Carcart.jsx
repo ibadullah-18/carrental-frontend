@@ -26,11 +26,11 @@ const Carcart = ({
     const isOwnCar = ownerId === currentUserId
 
     const rentalPrefill = {
-    startDate: car.startDate || car.StartDate || "",
-    endDate: car.endDate || car.EndDate || "",
-    pickupLocation: car.pickupLocation || car.PickupLocation || "",
-    returnLocation: car.returnLocation || car.ReturnLocation || ""
-}
+        startDate: car.startDate || car.StartDate || "",
+        endDate: car.endDate || car.EndDate || "",
+        pickupLocation: car.pickupLocation || car.PickupLocation || "",
+        returnLocation: car.returnLocation || car.ReturnLocation || ""
+    }
 
     const imagePath = car.mainImageUrl || car.imageUrl || car.image
     const image = imagePath
@@ -62,6 +62,15 @@ const Carcart = ({
                         50% { transform: scale(1.16); }
                         75% { transform: scale(1.08); }
                         100% { transform: scale(1); }
+                    }
+
+                    @keyframes trashShake {
+                        0% { transform: rotate(0deg) scale(1); }
+                        20% { transform: rotate(-10deg) scale(1.08); }
+                        40% { transform: rotate(10deg) scale(1.12); }
+                        60% { transform: rotate(-8deg) scale(1.12); }
+                        80% { transform: rotate(8deg) scale(1.08); }
+                        100% { transform: rotate(0deg) scale(1); }
                     }
                 `}
             </style>
@@ -114,12 +123,13 @@ const Carcart = ({
                         }
                     }}
                     disabled={deleteLoading}
+                    title="Remove from basket"
                     className={`
                         group absolute top-4 right-4 z-20
                         w-11 h-11 sm:w-12 sm:h-12
                         rounded-full flex items-center justify-center
                         backdrop-blur-md shadow-md border transition-all duration-300
-                        hover:-translate-y-1
+                        hover:-translate-y-1 hover:scale-105
                         ${
                             isDarkmodeEnabled
                                 ? "bg-[#111111]/80 border-white/10 hover:bg-[#1b1b1b]"
@@ -134,7 +144,11 @@ const Carcart = ({
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="relative z-10 w-5 h-5 sm:w-6 sm:h-6 text-red-500 transition duration-300"
+                        className={`relative z-10 w-5 h-5 sm:w-6 sm:h-6 text-red-500 transition duration-300 ${
+                            deleteLoading
+                                ? "animate-pulse"
+                                : "group-hover:animate-[trashShake_0.5s_ease-in-out]"
+                        }`}
                     >
                         <path
                             fillRule="evenodd"

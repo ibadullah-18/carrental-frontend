@@ -1,10 +1,9 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useDarkmode } from "../stores/useDarkmode"
-import { setAccessToken, setRefreshToken } from "../stores/auth"
+import { setAccessToken, setRefreshToken } from "../utils/auth"
+import { apiFetch } from "../utils/apiFetch"
 import LexusBg from "../assets/lexus-bg.png"
-import Navbar from "./Navbar"
-import Footer from "./Footer"
 
 const Login = () => {
     const { isDarkmodeEnabled } = useDarkmode()
@@ -15,50 +14,55 @@ const Login = () => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
-    const handleLogin = async (e) => {
-        e.preventDefault()
-        setError("")
-        setLoading(true)
+   const handleLogin = async (e) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
 
-        try {
-            const response = await fetch("http://localhost:5248/api/Auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email,
-                    password,
-                }),
-            })
+    try {
+        const response = await apiFetch("/api/Auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email,
+                password,
+            }),
+        })
 
-            if (!response.ok) {
-                throw new Error("Email ve ya sifre sehvdir")
-            }
+        const data = await response.json().catch(() => null)
 
-            const data = await response.json()
-
-            const accessToken = data.accessToken || data.token
-            const refreshToken = data.refreshToken
-
-            if (!accessToken) {
-                throw new Error("Access token gelmedi")
-            }
-
-            setAccessToken(accessToken)
-
-            if (refreshToken) {
-                setRefreshToken(refreshToken)
-            }
-
-            navigate("/")
-            window.location.reload()
-        } catch (err) {
-            setError(err.message || "Login zamani xeta bas verdi")
-        } finally {
-            setLoading(false)
+        if (!response.ok) {
+            throw new Error(
+                data?.message ||
+                data?.Message ||
+                "Email ve ya sifre sehvdir"
+            )
         }
+
+        const accessToken = data?.accessToken || data?.token
+        const refreshToken = data?.refreshToken
+
+        if (!accessToken) {
+            throw new Error("Access token gelmedi")
+        }
+
+        setAccessToken(accessToken)
+
+        if (refreshToken) {
+            setRefreshToken(refreshToken)
+        }
+
+        navigate("/")
+        window.location.reload()
+    } catch (err) {
+        console.log("Login error:", err)
+        setError(err.message || "Login zamani xeta bas verdi")
+    } finally {
+        setLoading(false)
     }
+}
 
     return (
   <div

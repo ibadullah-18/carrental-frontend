@@ -97,12 +97,12 @@ const Navbar = () => {
       <div className="max-w-[1280px] mx-auto h-[75px] px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* LOGO */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-full overflow-hidden shadow-md">
+          <div className="w-13 h-13 rounded-full overflow-hidden shadow-md">
             <img src={Logo} alt="Logo" className="w-full h-full object-cover" />
           </div>
 
           <div className="flex items-center text-xl font-semibold">
-            <span>Rent</span>
+            <span>Zyro</span>
             <span className="text-red-500 ml-1">CAR</span>
           </div>
         </Link>

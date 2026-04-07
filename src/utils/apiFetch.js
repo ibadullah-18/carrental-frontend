@@ -6,7 +6,7 @@ import {
   clearTokens,
 } from "./auth";
 
-const BASE_URL = "http://localhost:5248";
+const BASE_URL = "http://172.20.60.165:5248";
 
 async function refreshAccessToken() {
   const accessToken = getAccessToken();

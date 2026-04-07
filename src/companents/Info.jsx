@@ -1,4 +1,4 @@
-import Jeep from "../assets/Jeep.png";
+import Jeep from "../assets/Jeep.jpg";
 import { Search, CalendarCheck, Smile, ShieldCheck, BadgeDollarSign, MonitorSmartphone } from "lucide-react";
 
 const Info = () => {
@@ -90,18 +90,20 @@ const Info = () => {
                 ))}
               </div>
 
-              <div className="order-1 lg:order-2">
-                <div className="relative bg-[#f3f3f3] rounded-[28px] sm:rounded-[32px] min-h-[300px] sm:min-h-[360px] md:min-h-[430px] flex items-center justify-center overflow-hidden">
-                  <div className="absolute top-0 right-0 w-[65%] h-[38%] bg-[#ededed] rounded-bl-[40px]"></div>
-                  <div className="absolute bottom-0 left-0 w-[55%] h-[30%] bg-[#ededed] rounded-tr-[40px]"></div>
+<div className="order-1 lg:order-2 flex justify-center">
+  <div className="relative bg-[#fafafa] rounded-[32px] overflow-hidden p-6 w-fit flex items-center justify-center">
 
-                  <img
-                    src={Jeep}
-                    alt="Jeep"
-                    className="relative z-10 w-[88%] max-w-[520px] object-contain drop-shadow-[0_16px_30px_rgba(0,0,0,0.18)]"
-                  />
-                </div>
-              </div>
+    <div className="absolute top-0 right-0 w-[65%] h-[38%] bg-[#ededed] rounded-bl-[40px]"></div>
+    <div className="absolute bottom-0 left-0 w-[55%] h-[30%] bg-[#ededed] rounded-tr-[40px]"></div>
+
+    <img
+      src={Jeep}
+      alt="Jeep"
+      className="relative z-10 max-w-[700px] w-full h-auto object-contain rounded-[32px] drop-shadow-[0_25px_50px_rgba(0,0,0,0.25)]"
+    />
+
+  </div>
+</div>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import LexusBg from "../assets/lexus-bg.png";
 import { useDarkmode } from "../stores/useDarkmode";
+import { apiFetch } from "../utils/apiFetch";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -89,35 +90,30 @@ const handleRegister = async (e) => {
   try {
     setLoading(true);
 
-    const response = await fetch("http://localhost:5248/api/Auth/register", {
+    const formData = new FormData();
+    formData.append("FullName", fullName.trim());
+    formData.append("Email", email.trim());
+    formData.append("Phone", phone.trim());
+    formData.append("Password", password);
+    formData.append("DriverLicenseNumber", driverLicenseNumber.trim());
+
+    const response = await apiFetch("/api/Auth/register", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fullName: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        password: password,
-        driverLicenseNumber: driverLicenseNumber.trim(),
-      }),
+      body: formData,
     });
 
-    let data = null;
-    const text = await response.text();
-
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch {
-      data = text;
-    }
-
-    console.log("Status:", response.status);
-    console.log("Response data:", data);
+    const data = await response.json().catch(() => null);
+    console.log("Register response:", data);
 
     if (!response.ok) {
+      if (data?.errors) {
+        const firstError = Object.values(data.errors)?.flat()?.[0];
+        throw new Error(firstError || "Validation failed");
+      }
+
       throw new Error(
         data?.message ||
+          data?.Message ||
           data?.title ||
           "Registration failed"
       );

@@ -110,7 +110,7 @@ const Footer = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h1 className="text-2xl font-semibold">Rent</h1>
+              <h1 className="text-2xl font-semibold">Zyro</h1>
               <h1 className="text-2xl text-red-500 ml-1">CAR</h1>
             </div>
 
