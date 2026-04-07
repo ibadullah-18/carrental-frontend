@@ -1,9 +1,9 @@
 import BmwLogo from "../assets/bmw_logo_icon_145840 1.png";
 import MercedesLogo from "../assets/mercedes.png";
 import HyundaiLogo from "../assets/Hyundai.png";
-import AudiLogo from "../assets/audi.png";
+import AudiLogo from "../assets/Audi.png";
 import ToyotaLogo from "../assets/toyota.png";
-import KiaLogo from "../assets/kia.png";
+import KiaLogo from "../assets/Kia.png";
 
 import SedanImg from "../assets/sedan.png";
 import SuvImg from "../assets/suv.png";

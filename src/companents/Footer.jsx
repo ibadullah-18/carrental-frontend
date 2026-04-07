@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import Logo from "../assets/logo.png";
+import Logo from "../assets/Logo.png";
 import { useDarkmode } from "../stores/useDarkmode";
 import { FaTiktok, FaInstagram, FaTwitter, FaFacebookF } from "react-icons/fa";
 
