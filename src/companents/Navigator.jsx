@@ -12,6 +12,7 @@ import AddCarpage from "../pages/AddCarpage";
 import Profilepage from "../pages/Profilepage";
 import Mycarspage from "../pages/Maycarspage";
 import UpdateCarpage from "../pages/UpdateCarpage";
+import OwnerCarpage from "../pages/OwnerCarpage";
 
 const Navigator = () => {
   const { pathname } = useLocation();
@@ -33,6 +34,7 @@ const Navigator = () => {
       <Route path="/profile" element={<Profilepage />} />
       <Route path="/my-cars" element={<Mycarspage />} />
       <Route path="/update-car/:id" element={<UpdateCarpage />} />
+      <Route path="/owner-cars/:ownerId" element={<OwnerCarpage />} />
     </Routes>
   );
 };

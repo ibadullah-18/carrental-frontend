@@ -6,8 +6,7 @@ import { useDarkmode } from "../stores/useDarkmode"
 import { getAccessToken } from "../utils/auth"
 import { apiFetch } from "../utils/apiFetch"
 import defaultImage from "../assets/download.png"
-
-const CAR_API_BASE = "http://localhost:5248/api/Cars"
+import ImageLightbox from "./ImageLightbox"
 
 const Details = () => {
     const { id } = useParams()
@@ -19,11 +18,18 @@ const Details = () => {
     const [error, setError] = useState("")
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
+    const [owner, setOwner] = useState(null)
+    const [ownerLoading, setOwnerLoading] = useState(false)
+
     const [favoriteLoading, setFavoriteLoading] = useState(false)
     const [basketLoading, setBasketLoading] = useState(false)
 
     const [startDate, setStartDate] = useState("")
     const [endDate, setEndDate] = useState("")
+
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+    const [lightboxImages, setLightboxImages] = useState([])
+    const [lightboxIndex, setLightboxIndex] = useState(0)
 
     const [toast, setToast] = useState({
         show: false,
@@ -32,7 +38,6 @@ const Details = () => {
     })
 
     const toastTimeoutRef = useRef(null)
-
     const token = getAccessToken()
 
     const showToast = (message, type = "success") => {
@@ -92,6 +97,39 @@ const Details = () => {
         getCarById()
     }, [id])
 
+    useEffect(() => {
+        const getOwner = async () => {
+            const ownerId = car?.ownerId || car?.OwnerId
+            if (!ownerId) return
+
+            try {
+                setOwnerLoading(true)
+
+                const response = await apiFetch(`/api/Users/${ownerId}`, {
+                    method: "GET"
+                })
+
+                if (!response.ok) {
+                    setOwner(null)
+                    return
+                }
+
+                const data = await response.json()
+                console.log("Owner data:", data)
+                setOwner(data)
+            } catch (err) {
+                console.log("Owner fetch error:", err)
+                setOwner(null)
+            } finally {
+                setOwnerLoading(false)
+            }
+        }
+
+        if (car) {
+            getOwner()
+        }
+    }, [car])
+
     const normalizeImage = (img) => {
         if (!img) return null
 
@@ -104,7 +142,8 @@ const Details = () => {
                 img.imageUrl ||
                 img.url ||
                 img.path ||
-                img.mainImageUrl
+                img.mainImageUrl ||
+                img.profileImageUrl
         }
 
         if (!imagePath) return null
@@ -131,6 +170,32 @@ const Details = () => {
 
     const selectedImage = carImages[selectedImageIndex] || defaultImage
 
+    const ownerId = car?.ownerId || car?.OwnerId
+    const ownerName =
+        owner?.fullName ||
+        owner?.name ||
+        car?.ownerName ||
+        car?.OwnerName ||
+        "Istifadeci"
+
+    const ownerImage =
+        normalizeImage(owner?.profileImageUrl) ||
+        normalizeImage(owner?.imageUrl) ||
+        normalizeImage(owner?.image) ||
+        defaultImage
+
+    const openCarLightbox = (index = 0) => {
+        setLightboxImages(carImages)
+        setLightboxIndex(index)
+        setIsLightboxOpen(true)
+    }
+
+    const openOwnerLightbox = () => {
+        setLightboxImages([ownerImage])
+        setLightboxIndex(0)
+        setIsLightboxOpen(true)
+    }
+
     const handlePrevImage = () => {
         setSelectedImageIndex((prev) =>
             prev === 0 ? carImages.length - 1 : prev - 1
@@ -152,6 +217,11 @@ const Details = () => {
         navigate(`/rentals/${id}`)
     }
 
+    const handleOwnerClick = () => {
+        if (!ownerId) return
+        navigate(`/owner-cars/${ownerId}`)
+    }
+
     const handleAddFavorite = async () => {
         if (!token) {
             navigate("/login")
@@ -161,7 +231,7 @@ const Details = () => {
         try {
             setFavoriteLoading(true)
 
-           const response = await apiFetch("/api/Favorites", {
+            const response = await apiFetch("/api/Favorites", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -301,6 +371,8 @@ const Details = () => {
 
     return (
         <div className={`min-h-screen ${isDarkmodeEnabled ? "bg-[#0d0d0d] text-white" : "bg-[#fafafa] text-black"}`}>
+            <Navbar />
+
             {toast.show && (
                 <div className="fixed top-4 sm:top-5 left-1/2 -translate-x-1/2 z-[9999] w-[92%] max-w-md">
                     <div
@@ -317,7 +389,6 @@ const Details = () => {
 
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-10">
-
                     <div
                         className={`rounded-3xl border p-4 sm:p-5 lg:p-6 shadow-lg ${
                             isDarkmodeEnabled
@@ -329,7 +400,8 @@ const Details = () => {
                             <img
                                 src={selectedImage}
                                 alt={`${car?.brand || ""} ${car?.model || ""}`}
-                                className="w-full h-full object-cover"
+                                onClick={() => openCarLightbox(selectedImageIndex)}
+                                className="w-full h-full object-cover cursor-zoom-in"
                             />
 
                             {carImages.length > 1 && (
@@ -359,7 +431,10 @@ const Details = () => {
                                     <button
                                         key={index}
                                         type="button"
-                                        onClick={() => setSelectedImageIndex(index)}
+                                        onClick={() => {
+                                            setSelectedImageIndex(index)
+                                            openCarLightbox(index)
+                                        }}
                                         className={`w-24 h-16 sm:w-28 sm:h-20 rounded-2xl overflow-hidden border-2 flex-shrink-0 transition ${
                                             selectedImageIndex === index
                                                 ? "border-yellow-400 scale-105"
@@ -396,18 +471,55 @@ const Details = () => {
                                     </h1>
                                 </div>
 
-                                <div className={`px-4 py-2 rounded-2xl text-sm font-semibold ${
-                                    isDarkmodeEnabled
-                                        ? "bg-yellow-400 text-black"
-                                        : "bg-black text-white"
-                                }`}>
-                                    {car?.pricePerDay} AZN / gun
+                                <div
+                                    className={`px-4 py-2 rounded-2xl text-sm font-semibold ${
+                                        isDarkmodeEnabled
+                                            ? "bg-yellow-400 text-black"
+                                            : "bg-black text-white"
+                                    }`}
+                                >
+                                    {car?.pricePerDay} AZN / day
                                 </div>
                             </div>
 
-                            <p className={`text-sm sm:text-base leading-7 ${
-                                isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                            }`}>
+                            <button
+                                type="button"
+                                onClick={handleOwnerClick}
+                                className={`w-full sm:w-fit flex items-center gap-3 rounded-2xl px-4 py-3 border transition duration-300 hover:-translate-y-1 ${
+                                    isDarkmodeEnabled
+                                        ? "bg-[#1a1a1a] border-[#2b2b2b] hover:bg-[#202020]"
+                                        : "bg-[#f7f7f7] border-[#e6e6e6] hover:bg-[#efefef]"
+                                }`}
+                            >
+                                <img
+                                    src={ownerImage}
+                                    alt={ownerName}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        openOwnerLightbox()
+                                    }}
+                                    className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 cursor-zoom-in"
+                                />
+
+                                <div className="text-left">
+                                    <p
+                                        className={`text-xs sm:text-sm ${
+                                            isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
+                                        }`}
+                                    >
+                                        Car Owner
+                                    </p>
+                                    <p className="font-semibold text-sm sm:text-base">
+                                        {ownerLoading ? "Yuklenir..." : ownerName}
+                                    </p>
+                                </div>
+                            </button>
+
+                            <p
+                                className={`text-sm sm:text-base leading-7 ${
+                                    isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
+                                }`}
+                            >
                                 {car?.description || "Bu masin ucun description elave edilmeyib."}
                             </p>
 
@@ -568,25 +680,41 @@ const Details = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                         <div className={`rounded-2xl p-5 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f8f8f8]"}`}>
                             <h3 className="text-lg font-semibold mb-3">Why choose this car?</h3>
-                            <p className={`leading-7 text-sm sm:text-base ${
-                                isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                            }`}>
+                            <p
+                                className={`leading-7 text-sm sm:text-base ${
+                                    isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
+                                }`}
+                            >
                                 {car?.description || "Bu masin ucun description elave edilmeyib."}
                             </p>
                         </div>
 
                         <div className={`rounded-2xl p-5 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f8f8f8]"}`}>
                             <h3 className="text-lg font-semibold mb-3">Rental info</h3>
-                            <p className={`leading-7 text-sm sm:text-base ${
-                                isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                            }`}>
-                                Masini goturmek ucun login olmaq lazimdir. Tarixleri sec, sonra Add Basket ile sebete elave et,
-                                ya da birbasa Rental Now duymesine basib davam et.
+                            <p
+                                className={`leading-7 text-sm sm:text-base ${
+                                    isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
+                                }`}
+                            >
+                                To pick up the car, you need to log in. Select the dates,
+                                then add it to the basket using “Add Basket,” or click the
+                                “Rental Now” button to continue directly.
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <ImageLightbox
+                isOpen={isLightboxOpen}
+                onClose={() => setIsLightboxOpen(false)}
+                images={lightboxImages}
+                currentIndex={lightboxIndex}
+                setCurrentIndex={setLightboxIndex}
+                title={`${car?.brand || "Car"} ${car?.model || ""}`}
+            />
+
+            <Footer />
         </div>
     )
 }
