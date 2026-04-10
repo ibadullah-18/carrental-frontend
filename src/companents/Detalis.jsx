@@ -30,6 +30,7 @@ const Details = () => {
     const [isLightboxOpen, setIsLightboxOpen] = useState(false)
     const [lightboxImages, setLightboxImages] = useState([])
     const [lightboxIndex, setLightboxIndex] = useState(0)
+    const [lightboxTitle, setLightboxTitle] = useState("")
 
     const [toast, setToast] = useState({
         show: false,
@@ -140,10 +141,13 @@ const Details = () => {
         } else {
             imagePath =
                 img.imageUrl ||
+                img.ImageUrl ||
                 img.url ||
                 img.path ||
                 img.mainImageUrl ||
-                img.profileImageUrl
+                img.MainImageUrl ||
+                img.profileImageUrl ||
+                img.ProfileImageUrl
         }
 
         if (!imagePath) return null
@@ -154,45 +158,62 @@ const Details = () => {
     }
 
     const carImages = useMemo(() => {
-        const images =
-            car?.carImages?.length > 0
-                ? car.carImages.map(normalizeImage).filter(Boolean)
-                : car?.images?.length > 0
-                ? car.images.map(normalizeImage).filter(Boolean)
-                : [
-                      normalizeImage(car?.mainImageUrl),
-                      normalizeImage(car?.imageUrl),
-                      normalizeImage(car?.image)
-                  ].filter(Boolean)
+        const rawImages =
+            Array.isArray(car?.carImages) ? car.carImages :
+            Array.isArray(car?.CarImages) ? car.CarImages :
+            Array.isArray(car?.images) ? car.images :
+            Array.isArray(car?.Images) ? car.Images :
+            []
 
-        return images.length > 0 ? images : [defaultImage]
+        const normalized = rawImages.map(normalizeImage).filter(Boolean)
+
+        if (normalized.length > 0) return normalized
+
+        const fallbackImages = [
+            normalizeImage(car?.mainImageUrl),
+            normalizeImage(car?.MainImageUrl),
+            normalizeImage(car?.imageUrl),
+            normalizeImage(car?.ImageUrl),
+            normalizeImage(car?.image),
+            normalizeImage(car?.Image)
+        ].filter(Boolean)
+
+        return fallbackImages.length > 0 ? fallbackImages : [defaultImage]
     }, [car])
 
     const selectedImage = carImages[selectedImageIndex] || defaultImage
 
     const ownerId = car?.ownerId || car?.OwnerId
+
     const ownerName =
         owner?.fullName ||
+        owner?.FullName ||
         owner?.name ||
+        owner?.Name ||
         car?.ownerName ||
         car?.OwnerName ||
         "Istifadeci"
 
     const ownerImage =
         normalizeImage(owner?.profileImageUrl) ||
+        normalizeImage(owner?.ProfileImageUrl) ||
         normalizeImage(owner?.imageUrl) ||
+        normalizeImage(owner?.ImageUrl) ||
         normalizeImage(owner?.image) ||
+        normalizeImage(owner?.Image) ||
         defaultImage
 
     const openCarLightbox = (index = 0) => {
         setLightboxImages(carImages)
         setLightboxIndex(index)
+        setLightboxTitle(`${car?.brand || car?.Brand || "Car"} ${car?.model || car?.Model || ""}`)
         setIsLightboxOpen(true)
     }
 
     const openOwnerLightbox = () => {
         setLightboxImages([ownerImage])
         setLightboxIndex(0)
+        setLightboxTitle(ownerName)
         setIsLightboxOpen(true)
     }
 
@@ -348,11 +369,9 @@ const Details = () => {
     if (loading) {
         return (
             <div className={`min-h-screen ${isDarkmodeEnabled ? "bg-[#0d0d0d] text-white" : "bg-white text-black"}`}>
-                <Navbar />
                 <div className="flex items-center justify-center py-24 text-xl">
                     Yuklenir...
                 </div>
-                <Footer />
             </div>
         )
     }
@@ -360,18 +379,15 @@ const Details = () => {
     if (error || !car) {
         return (
             <div className={`min-h-screen ${isDarkmodeEnabled ? "bg-[#0d0d0d] text-white" : "bg-white text-black"}`}>
-                <Navbar />
                 <div className="flex items-center justify-center py-24 text-xl text-red-500 px-4 text-center">
                     {error || "Melumat tapilmadi"}
                 </div>
-                <Footer />
             </div>
         )
     }
 
     return (
         <div className={`min-h-screen ${isDarkmodeEnabled ? "bg-[#0d0d0d] text-white" : "bg-[#fafafa] text-black"}`}>
-            <Navbar />
 
             {toast.show && (
                 <div className="fixed top-4 sm:top-5 left-1/2 -translate-x-1/2 z-[9999] w-[92%] max-w-md">
@@ -396,12 +412,13 @@ const Details = () => {
                                 : "bg-white border-[#e7e7e7]"
                         }`}
                     >
-                        <div className="relative w-full h-[240px] sm:h-[360px] lg:h-[460px] rounded-3xl overflow-hidden bg-gray-200">
+                        <div className="relative w-full h-[260px] sm:h-[380px] lg:h-[500px] rounded-3xl overflow-hidden bg-black/5">
                             <img
                                 src={selectedImage}
-                                alt={`${car?.brand || ""} ${car?.model || ""}`}
+                                alt={`${car?.brand || car?.Brand || ""} ${car?.model || car?.Model || ""}`}
                                 onClick={() => openCarLightbox(selectedImageIndex)}
-                                className="w-full h-full object-cover cursor-zoom-in"
+                                className="w-full h-full object-cover cursor-zoom-in transition-transform duration-300 hover:scale-[1.02]"
+                                draggable={false}
                             />
 
                             {carImages.length > 1 && (
@@ -445,6 +462,7 @@ const Details = () => {
                                             src={img}
                                             alt={`car-${index}`}
                                             className="w-full h-full object-cover"
+                                            draggable={false}
                                         />
                                     </button>
                                 ))}
@@ -467,7 +485,7 @@ const Details = () => {
                                     </p>
 
                                     <h1 className="text-3xl sm:text-4xl font-bold mt-2 leading-tight">
-                                        {car?.brand} {car?.model} {car?.year}
+                                        {car?.brand || car?.Brand} {car?.model || car?.Model} {car?.year || car?.Year}
                                     </h1>
                                 </div>
 
@@ -478,7 +496,7 @@ const Details = () => {
                                             : "bg-black text-white"
                                     }`}
                                 >
-                                    {car?.pricePerDay} AZN / day
+                                    {car?.pricePerDay || car?.PricePerDay} AZN / day
                                 </div>
                             </div>
 
@@ -498,7 +516,8 @@ const Details = () => {
                                         e.stopPropagation()
                                         openOwnerLightbox()
                                     }}
-                                    className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 cursor-zoom-in"
+                                    className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400 cursor-zoom-in transition-transform duration-300 hover:scale-110"
+                                    draggable={false}
                                 />
 
                                 <div className="text-left">
@@ -515,58 +534,50 @@ const Details = () => {
                                 </div>
                             </button>
 
-                            <p
-                                className={`text-sm sm:text-base leading-7 ${
-                                    isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                                }`}
-                            >
-                                {car?.description || "Bu masin ucun description elave edilmeyib."}
-                            </p>
-
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mt-2">
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Brand</p>
-                                    <p className="font-semibold mt-1">{car?.brand || "-"}</p>
+                                    <p className="font-semibold mt-1">{car?.brand || car?.Brand || "-"}</p>
                                 </div>
 
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Model</p>
-                                    <p className="font-semibold mt-1">{car?.model || "-"}</p>
+                                    <p className="font-semibold mt-1">{car?.model || car?.Model || "-"}</p>
                                 </div>
 
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Year</p>
-                                    <p className="font-semibold mt-1">{car?.year || "-"}</p>
+                                    <p className="font-semibold mt-1">{car?.year || car?.Year || "-"}</p>
                                 </div>
 
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Fuel</p>
-                                    <p className="font-semibold mt-1">{car?.fuelType || "-"}</p>
+                                    <p className="font-semibold mt-1">{car?.fuelType || car?.FuelType || "-"}</p>
                                 </div>
 
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Transmission</p>
-                                    <p className="font-semibold mt-1">{car?.transmission || "-"}</p>
+                                    <p className="font-semibold mt-1">{car?.transmission || car?.Transmission || "-"}</p>
                                 </div>
 
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Mileage</p>
-                                    <p className="font-semibold mt-1">{car?.mileage || "-"} km</p>
+                                    <p className="font-semibold mt-1">{car?.mileage || car?.Mileage || "-"} km</p>
                                 </div>
 
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Color</p>
-                                    <p className="font-semibold mt-1">{car?.color || "-"}</p>
+                                    <p className="font-semibold mt-1">{car?.color || car?.Color || "-"}</p>
                                 </div>
 
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Location</p>
-                                    <p className="font-semibold mt-1">{car?.location || "-"}</p>
+                                    <p className="font-semibold mt-1">{car?.location || car?.Location || "-"}</p>
                                 </div>
 
                                 <div className={`rounded-2xl p-4 ${isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-[#f6f6f6]"}`}>
                                     <p className="text-xs sm:text-sm opacity-70">Body Type</p>
-                                    <p className="font-semibold mt-1">{car?.bodyType || "-"}</p>
+                                    <p className="font-semibold mt-1">{car?.bodyType || car?.BodyType || "-"}</p>
                                 </div>
                             </div>
 
@@ -685,7 +696,7 @@ const Details = () => {
                                     isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
                                 }`}
                             >
-                                {car?.description || "Bu masin ucun description elave edilmeyib."}
+                                {car?.description || car?.Description || "Bu masin ucun description elave edilmeyib."}
                             </p>
                         </div>
 
@@ -711,10 +722,8 @@ const Details = () => {
                 images={lightboxImages}
                 currentIndex={lightboxIndex}
                 setCurrentIndex={setLightboxIndex}
-                title={`${car?.brand || "Car"} ${car?.model || ""}`}
+                title={lightboxTitle}
             />
-
-            <Footer />
         </div>
     )
 }

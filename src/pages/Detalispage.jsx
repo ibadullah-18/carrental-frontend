@@ -1,5 +1,4 @@
 import Details from "../companents/Detalis";
-import Navbar from "../companents/Navbar"
 import Footer from "../companents/Footer"
 import Info from "../companents/Info";  
 

@@ -1,5 +1,4 @@
 import Basket from "../companents/Basket"
-import Navbar from "../companents/Navbar"
 import Footer from "../companents/Footer"
 import Info from "../companents/Info";
 

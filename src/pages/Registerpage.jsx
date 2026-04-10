@@ -1,5 +1,4 @@
 import Register from "../companents/Register";
-import Navbar from "../companents/Navbar"
 import Footer from "../companents/Footer"
 
 const Registerpage = () => {

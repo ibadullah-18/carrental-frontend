@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useDarkmode } from "../stores/useDarkmode";
-import { getAccessToken } from "../utils/auth";
-import { apiFetch } from "../utils/apiFetch";
-import { REGION_OPTIONS } from "../data/regions";
+import { useEffect, useMemo, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useDarkmode } from "../stores/useDarkmode"
+import { getAccessToken } from "../utils/auth"
+import { apiFetch } from "../utils/apiFetch"
+import { REGION_OPTIONS } from "../data/regions"
 import {
   BODY_TYPE_OPTIONS,
   CAR_BRANDS,
@@ -11,286 +11,337 @@ import {
   FUEL_OPTIONS,
   TRANSMISSION_OPTIONS,
   YEAR_OPTIONS,
-} from "../data/carOptions";
+} from "../data/carOptions"
 
-const API_BASE = "http://localhost:5248";
+const API_BASE = "http://localhost:5248"
 
 const UpdateCar = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { isDarkmodeEnabled } = useDarkmode();
-  const token = getAccessToken();
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { isDarkmodeEnabled } = useDarkmode()
+  const token = getAccessToken()
 
-  const [brand, setBrand] = useState("");
-  const [model, setModel] = useState("");
-  const [year, setYear] = useState("");
-  const [pricePerDay, setPricePerDay] = useState("");
-  const [fuelType, setFuelType] = useState("");
-  const [transmission, setTransmission] = useState("");
-  const [mileage, setMileage] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [color, setColor] = useState("");
-  const [bodyType, setBodyType] = useState("");
-  const [images, setImages] = useState([]);
+  const [brand, setBrand] = useState("")
+  const [model, setModel] = useState("")
+  const [year, setYear] = useState("")
+  const [pricePerDay, setPricePerDay] = useState("")
+  const [fuelType, setFuelType] = useState("")
+  const [transmission, setTransmission] = useState("")
+  const [mileage, setMileage] = useState("")
+  const [description, setDescription] = useState("")
+  const [location, setLocation] = useState("")
+  const [color, setColor] = useState("")
+  const [bodyType, setBodyType] = useState("")
 
-  const [existingImages, setExistingImages] = useState([]);
-  const [visibleBrandCount, setVisibleBrandCount] = useState(6);
+  const [images, setImages] = useState([])
+  const [mainNewImageIndex, setMainNewImageIndex] = useState(0)
 
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [deletingImageId, setDeletingImageId] = useState(null);
-  const [settingMainImageId, setSettingMainImageId] = useState(null);
+  const [existingImages, setExistingImages] = useState([])
+  const [visibleBrandCount, setVisibleBrandCount] = useState(6)
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [deletingImageId, setDeletingImageId] = useState(null)
+  const [settingMainImageId, setSettingMainImageId] = useState(null)
+
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
   const getImageUrl = (path) => {
-    if (!path) return "https://placehold.co/600x400?text=No+Image";
+    if (!path) return "https://placehold.co/600x400?text=No+Image"
 
     if (path.startsWith("http://") || path.startsWith("https://")) {
-      return path;
+      return path
     }
 
-    return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
-  };
+    return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`
+  }
 
   const availableModels = useMemo(() => {
-    const selectedBrand = CAR_BRANDS.find((item) => item.brand === brand);
-    return selectedBrand ? selectedBrand.models : [];
-  }, [brand]);
+    const selectedBrand = CAR_BRANDS.find((item) => item.brand === brand)
+    return selectedBrand ? selectedBrand.models : []
+  }, [brand])
 
   const imagePreviewUrls = useMemo(() => {
     return images.map((file) => ({
       file,
       url: URL.createObjectURL(file),
-    }));
-  }, [images]);
+    }))
+  }, [images])
 
   useEffect(() => {
     return () => {
-      imagePreviewUrls.forEach((item) => URL.revokeObjectURL(item.url));
-    };
-  }, [imagePreviewUrls]);
+      imagePreviewUrls.forEach((item) => URL.revokeObjectURL(item.url))
+    }
+  }, [imagePreviewUrls])
 
   const normalizeImages = (carData) => {
-    if (Array.isArray(carData?.images)) return carData.images;
-    if (Array.isArray(carData?.Images)) return carData.Images;
-    if (Array.isArray(carData?.images?.$values)) return carData.images.$values;
-    if (Array.isArray(carData?.Images?.$values)) return carData.Images.$values;
-    return [];
-  };
+    if (Array.isArray(carData?.images)) return carData.images
+    if (Array.isArray(carData?.Images)) return carData.Images
+    if (Array.isArray(carData?.images?.$values)) return carData.images.$values
+    if (Array.isArray(carData?.Images?.$values)) return carData.Images.$values
+    return []
+  }
 
   const fillForm = (carData) => {
-    setBrand(carData.brand || carData.Brand || "");
-    setModel(carData.model || carData.Model || "");
-    setYear(String(carData.year || carData.Year || ""));
-    setPricePerDay(String(carData.pricePerDay || carData.PricePerDay || ""));
-    setFuelType(carData.fuelType || carData.FuelType || "");
-    setTransmission(carData.transmission || carData.Transmission || "");
-    setMileage(String(carData.mileage || carData.Mileage || ""));
-    setDescription(carData.description || carData.Description || "");
-    setLocation(carData.location || carData.Location || "");
-    setColor(carData.color || carData.Color || "");
-    setBodyType(String(carData.bodyType ?? carData.BodyType ?? ""));
-    setExistingImages(normalizeImages(carData));
-  };
+    setBrand(carData.brand || carData.Brand || "")
+    setModel(carData.model || carData.Model || "")
+    setYear(String(carData.year || carData.Year || ""))
+    setPricePerDay(String(carData.pricePerDay || carData.PricePerDay || ""))
+    setFuelType(carData.fuelType || carData.FuelType || "")
+    setTransmission(carData.transmission || carData.Transmission || "")
+    setMileage(String(carData.mileage || carData.Mileage || ""))
+    setDescription(carData.description || carData.Description || "")
+    setLocation(carData.location || carData.Location || "")
+    setColor(carData.color || carData.Color || "")
+    setBodyType(String(carData.bodyType ?? carData.BodyType ?? ""))
+    setExistingImages(normalizeImages(carData))
+  }
 
   const fetchCar = async () => {
     try {
-      setLoading(true);
-      setError("");
+      setLoading(true)
+      setError("")
 
       if (!token) {
-        setError("You must be logged in");
-        return;
+        setError("You must be logged in")
+        return
       }
 
-        const response = await apiFetch(`/api/Cars/${id}`, {
+      const response = await apiFetch(`/api/Cars/${id}`, {
         method: "GET",
         headers: {
-            Accept: "*/*",
+          Accept: "*/*",
         },
-        });
+      })
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json().catch(() => null)
 
       if (!response.ok) {
-        throw new Error(data?.Message || data?.message || "Car not found");
+        throw new Error(data?.Message || data?.message || "Car not found")
       }
 
-      fillForm(data);
+      fillForm(data)
     } catch (err) {
-      console.log(err);
-      setError(err.message || "Car data could not be loaded");
+      console.log(err)
+      setError(err.message || "Car data could not be loaded")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchCar();
-  }, [id]);
+    fetchCar()
+  }, [id])
 
   const handleImageChange = (e) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    setImages(selectedFiles);
-  };
+    const selectedFiles = Array.from(e.target.files || [])
+    if (selectedFiles.length === 0) return
+
+    setImages((prev) => [...prev, ...selectedFiles])
+    e.target.value = ""
+  }
+
+  const handleRemoveSelectedImage = (removeIndex) => {
+    setImages((prev) => {
+      const updated = prev.filter((_, index) => index !== removeIndex)
+
+      setMainNewImageIndex((prevMainIndex) => {
+        if (updated.length === 0) return 0
+        if (removeIndex === prevMainIndex) return 0
+        if (removeIndex < prevMainIndex) return prevMainIndex - 1
+        return prevMainIndex >= updated.length ? 0 : prevMainIndex
+      })
+
+      return updated
+    })
+  }
+
+  const handleSetSelectedMainImage = (index) => {
+    setMainNewImageIndex(index)
+  }
 
   const handleDeleteImage = async (imageId) => {
     try {
-      setDeletingImageId(imageId);
-      setError("");
-      setSuccess("");
+      setDeletingImageId(imageId)
+      setError("")
+      setSuccess("")
 
-        const response = await apiFetch(`/api/Cars/images/${imageId}`, {
+      const response = await apiFetch(`/api/Cars/images/${imageId}`, {
         method: "DELETE",
         headers: {
-            Accept: "*/*",
+          Accept: "*/*",
         },
-        });
+      })
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json().catch(() => null)
 
       if (!response.ok) {
-        throw new Error(data?.Message || data?.message || "Image could not be deleted");
+        throw new Error(data?.Message || data?.message || "Image could not be deleted")
       }
 
-      setSuccess("Image deleted successfully");
-      await fetchCar();
+      setSuccess("Image deleted successfully")
+      await fetchCar()
     } catch (err) {
-      console.log(err);
-      setError(err.message || "Image delete failed");
+      console.log(err)
+      setError(err.message || "Image delete failed")
     } finally {
-      setDeletingImageId(null);
+      setDeletingImageId(null)
     }
-  };
+  }
 
   const handleSetMainImage = async (imageId) => {
     try {
-      setSettingMainImageId(imageId);
-      setError("");
-      setSuccess("");
+      setSettingMainImageId(imageId)
+      setError("")
+      setSuccess("")
 
       const response = await apiFetch(`/api/Cars/images/${imageId}/set-main`, {
         method: "PUT",
         headers: {
-            Accept: "*/*",
+          Accept: "*/*",
         },
-        });
+      })
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json().catch(() => null)
 
       if (!response.ok) {
-        throw new Error(data?.Message || data?.message || "Main image could not be updated");
+        throw new Error(data?.Message || data?.message || "Main image could not be updated")
       }
 
-      setSuccess("Main image updated successfully");
-      await fetchCar();
+      setSuccess("Main image updated successfully")
+      await fetchCar()
     } catch (err) {
-      console.log(err);
-      setError(err.message || "Main image update failed");
+      console.log(err)
+      setError(err.message || "Main image update failed")
     } finally {
-      setSettingMainImageId(null);
+      setSettingMainImageId(null)
     }
-  };
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  setError("");
-  setSuccess("");
-
-  if (!token) {
-    setError("You must be logged in");
-    return;
   }
 
-  if (
-    !brand ||
-    !model ||
-    !year ||
-    !pricePerDay ||
-    !fuelType ||
-    !transmission ||
-    !mileage ||
-    !description ||
-    !location ||
-    !color ||
-    bodyType === ""
-  ) {
-    setError("Please fill in all fields");
-    return;
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault()
 
-  try {
-    setSubmitting(true);
+    setError("")
+    setSuccess("")
 
-    // 1) car melumatlarini update et
-    const updateFormData = new FormData();
-    updateFormData.append("Brand", brand);
-    updateFormData.append("Model", model);
-    updateFormData.append("Year", year);
-    updateFormData.append("PricePerDay", pricePerDay);
-    updateFormData.append("FuelType", fuelType);
-    updateFormData.append("Transmission", transmission);
-    updateFormData.append("Mileage", mileage);
-    updateFormData.append("Description", description);
-    updateFormData.append("Location", location);
-    updateFormData.append("Color", color);
-    updateFormData.append("BodyType", bodyType);
-
-    const updateResponse = await apiFetch(`/api/Cars/${id}`, {
-    method: "PUT",
-    body: updateFormData,
-    });
-
-    const updateText = await updateResponse.text();
-
-    if (!updateResponse.ok) {
-      throw new Error(updateText || "Car could not be updated");
+    if (!token) {
+      setError("You must be logged in")
+      return
     }
 
-    // 2) yeni sekilleri kohnelerin yanina elave et
-    if (images.length > 0) {
-      for (const image of images) {
-        const imageFormData = new FormData();
-        imageFormData.append("file", image);
+    if (
+      !brand ||
+      !model ||
+      !year ||
+      !pricePerDay ||
+      !fuelType ||
+      !transmission ||
+      !mileage ||
+      !description ||
+      !location ||
+      !color ||
+      bodyType === ""
+    ) {
+      setError("Please fill in all fields")
+      return
+    }
 
-        const imageResponse = await apiFetch(`/api/Cars/${id}/images`, {
-        method: "POST",
-        body: imageFormData,
-        });
+    try {
+      setSubmitting(true)
 
-        const imageText = await imageResponse.text();
+      const updateFormData = new FormData()
+      updateFormData.append("Brand", brand)
+      updateFormData.append("Model", model)
+      updateFormData.append("Year", year)
+      updateFormData.append("PricePerDay", pricePerDay)
+      updateFormData.append("FuelType", fuelType)
+      updateFormData.append("Transmission", transmission)
+      updateFormData.append("Mileage", mileage)
+      updateFormData.append("Description", description)
+      updateFormData.append("Location", location)
+      updateFormData.append("Color", color)
+      updateFormData.append("BodyType", bodyType)
 
-        if (!imageResponse.ok) {
-          throw new Error(imageText || "Image could not be added");
+      const updateResponse = await apiFetch(`/api/Cars/${id}`, {
+        method: "PUT",
+        body: updateFormData,
+      })
+
+      const updateText = await updateResponse.text()
+
+      if (!updateResponse.ok) {
+        throw new Error(updateText || "Car could not be updated")
+      }
+
+      let uploadedImageIds = []
+
+      if (images.length > 0) {
+        for (const image of images) {
+          const imageFormData = new FormData()
+          imageFormData.append("file", image)
+
+          const imageResponse = await apiFetch(`/api/Cars/${id}/images`, {
+            method: "POST",
+            body: imageFormData,
+          })
+
+          const imageContentType = imageResponse.headers.get("content-type") || ""
+
+          if (!imageResponse.ok) {
+            const imageText = await imageResponse.text()
+            throw new Error(imageText || "Image could not be added")
+          }
+
+          if (imageContentType.includes("application/json")) {
+            const uploadedImage = await imageResponse.json()
+            uploadedImageIds.push(uploadedImage?.id || uploadedImage?.Id)
+          } else {
+            uploadedImageIds.push(null)
+          }
+        }
+
+        const selectedMainImageId = uploadedImageIds[mainNewImageIndex]
+
+        if (selectedMainImageId) {
+          const setMainResponse = await apiFetch(`/api/Cars/images/${selectedMainImageId}/set-main`, {
+            method: "PUT",
+            headers: {
+              Accept: "*/*",
+            },
+          })
+
+          const setMainText = await setMainResponse.text()
+
+          if (!setMainResponse.ok) {
+            throw new Error(setMainText || "Main image could not be updated")
+          }
         }
       }
-    }
 
-    setSuccess("Car updated successfully");
-    setImages([]);
-    await fetchCar();
-  } catch (err) {
-    console.log("Update error:", err);
-    setError(err.message || "Something went wrong");
-  } finally {
-    setSubmitting(false);
+      setSuccess("Car updated successfully")
+      setImages([])
+      setMainNewImageIndex(0)
+      await fetchCar()
+    } catch (err) {
+      console.log("Update error:", err)
+      setError(err.message || "Something went wrong")
+    } finally {
+      setSubmitting(false)
+    }
   }
-};
+
   const inputClassName = `w-full p-3 rounded-xl outline-none border ${
     isDarkmodeEnabled
       ? "bg-white/10 border-white/20 text-white placeholder-gray-300"
       : "bg-black/5 border-black/10 text-black placeholder-gray-500"
-  }`;
+  }`
 
   const cardClassName = isDarkmodeEnabled
     ? "bg-[#111111] border-[#2a2a2a] text-white"
-    : "bg-[#f7f7f7] border-[#e5e5e5] text-black";
+    : "bg-[#f7f7f7] border-[#e5e5e5] text-black"
 
-  const visibleBrands = CAR_BRANDS.slice(0, visibleBrandCount);
+  const visibleBrands = CAR_BRANDS.slice(0, visibleBrandCount)
 
   if (loading) {
     return (
@@ -304,7 +355,7 @@ const handleSubmit = async (e) => {
           <p className="font-semibold text-lg">Loading car...</p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -331,15 +382,15 @@ const handleSubmit = async (e) => {
 
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {visibleBrands.map((item) => {
-                  const isSelected = brand === item.brand;
+                  const isSelected = brand === item.brand
 
                   return (
                     <button
                       key={item.brand}
                       type="button"
                       onClick={() => {
-                        setBrand(item.brand);
-                        setModel("");
+                        setBrand(item.brand)
+                        setModel("")
                       }}
                       className={`rounded-[18px] border p-4 text-center font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
                         isSelected
@@ -351,7 +402,7 @@ const handleSubmit = async (e) => {
                     >
                       <div className="text-base sm:text-lg">{item.brand}</div>
                     </button>
-                  );
+                  )
                 })}
               </div>
 
@@ -379,9 +430,9 @@ const handleSubmit = async (e) => {
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {existingImages.map((image, index) => {
-                    const imageId = image.id || image.Id;
-                    const isMain = image.isMain || image.IsMain;
-                    const imageUrl = image.imageUrl || image.ImageUrl;
+                    const imageId = image.id || image.Id
+                    const isMain = image.isMain || image.IsMain
+                    const imageUrl = image.imageUrl || image.ImageUrl
 
                     return (
                       <div
@@ -432,14 +483,19 @@ const handleSubmit = async (e) => {
                           </div>
                         </div>
                       </div>
-                    );
+                    )
                   })}
                 </div>
               )}
             </div>
 
             <div className={`rounded-[24px] sm:rounded-[28px] border p-4 sm:p-6 mt-6 ${cardClassName}`}>
-              <h2 className="text-xl sm:text-2xl font-bold mb-4">Add New Images</h2>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold">Add New Images</h2>
+                <div className={`text-sm ${isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}`}>
+                  {images.length} image selected
+                </div>
+              </div>
 
               <input
                 type="file"
@@ -451,25 +507,59 @@ const handleSubmit = async (e) => {
 
               {imagePreviewUrls.length > 0 && (
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
-                  {imagePreviewUrls.map((item, index) => (
-                    <div
-                      key={`${item.file.name}-${index}`}
-                      className={`rounded-[18px] overflow-hidden border ${
-                        isDarkmodeEnabled
-                          ? "border-[#2a2a2a] bg-[#1a1a1a]"
-                          : "border-[#e5e5e5] bg-white"
-                      }`}
-                    >
-                      <img
-                        src={item.url}
-                        alt={`preview-${index}`}
-                        className="w-full h-[140px] sm:h-[180px] object-cover"
-                      />
-                      <div className="px-3 py-2 text-xs sm:text-sm truncate">
-                        {item.file.name}
+                  {imagePreviewUrls.map((item, index) => {
+                    const isMain = index === mainNewImageIndex
+
+                    return (
+                      <div
+                        key={`${item.file.name}-${index}-${item.file.lastModified}`}
+                        className={`rounded-[18px] overflow-hidden border ${
+                          isDarkmodeEnabled
+                            ? "border-[#2a2a2a] bg-[#1a1a1a]"
+                            : "border-[#e5e5e5] bg-white"
+                        }`}
+                      >
+                        <img
+                          src={item.url}
+                          alt={`preview-${index}`}
+                          className="w-full h-[140px] sm:h-[180px] object-cover"
+                        />
+
+                        <div className="p-3">
+                          <div className="px-0 py-0 text-xs sm:text-sm truncate mb-2">
+                            {item.file.name}
+                          </div>
+
+                          <div className="text-xs sm:text-sm font-medium mb-3">
+                            {isMain ? "Main image" : `New image ${index + 1}`}
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSetSelectedMainImage(index)}
+                              disabled={isMain}
+                              className={`w-full py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
+                                isMain
+                                  ? "bg-green-500 text-white cursor-default"
+                                  : "bg-blue-500 text-white hover:opacity-90"
+                              }`}
+                            >
+                              {isMain ? "Main Image" : "Set Main"}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSelectedImage(index)}
+                              className="w-full py-2 rounded-xl text-xs sm:text-sm font-semibold bg-red-500 text-white hover:opacity-90 transition"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -638,8 +728,8 @@ const handleSubmit = async (e) => {
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Write a short description"
-                    rows={6}
+                    rows={5}
+                    placeholder="Write car details"
                     className={`${inputClassName} resize-none`}
                   />
                 </div>
@@ -698,7 +788,7 @@ const handleSubmit = async (e) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default UpdateCar;
+export default UpdateCar

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import { apiFetch } from "../utils/apiFetch";
+import ConfirmModal from "../companents/ConfirmModal";
 
 const API_BASE = "http://localhost:5248";
 
@@ -154,8 +155,7 @@ const MyCars = () => {
         title: "Deactivate Car",
         message: "Are you sure you want to deactivate this car?",
         confirmText: "Yes, Deactivate",
-        confirmClass:
-          "bg-orange-500 text-white shadow-md hover:shadow-xl hover:-translate-y-1",
+        danger: false,
       };
     }
 
@@ -164,8 +164,7 @@ const MyCars = () => {
         title: "Activate Car",
         message: "Are you sure you want to activate this car?",
         confirmText: "Yes, Activate",
-        confirmClass:
-          "bg-green-500 text-white shadow-md hover:shadow-xl hover:-translate-y-1",
+        danger: false,
       };
     }
 
@@ -173,8 +172,7 @@ const MyCars = () => {
       title: "Delete Permanently",
       message: "Are you sure you want to permanently delete this car?",
       confirmText: "Yes, Delete",
-      confirmClass:
-        "bg-red-500 text-white shadow-md hover:shadow-xl hover:-translate-y-1",
+      danger: true,
     };
   };
 
@@ -254,9 +252,7 @@ const MyCars = () => {
       }
 
       showToast(successMessage, "success");
-      setActionModalOpen(false);
-      setSelectedCar(null);
-      setSelectedAction(null);
+      closeActionModal();
     } catch (error) {
       console.log("Action error:", error);
       showToast(error.message || "An error occurred", "error");
@@ -405,61 +401,20 @@ const MyCars = () => {
         </div>
       )}
 
-      {actionModalOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
-            onClick={closeActionModal}
-          ></div>
-
-          <div
-            className={`relative z-10 w-full max-w-md rounded-3xl border shadow-2xl p-5 sm:p-6 ${
-              isDarkmodeEnabled
-                ? "bg-[#181818] border-white/10 text-white"
-                : "bg-white border-gray-200 text-black"
-            }`}
-          >
-            <h2 className="text-xl sm:text-2xl font-bold mb-3">
-              {modalContent.title}
-            </h2>
-
-            <p
-              className={`text-sm sm:text-base leading-6 ${
-                isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-              }`}
-            >
-              {modalContent.message}
-            </p>
-
-            <div className="mt-5 flex gap-3">
-              <button
-                onClick={closeActionModal}
-                disabled={actionLoadingCarId === (selectedCar?.id || selectedCar?.Id)}
-                className={`flex-1 rounded-2xl py-3 font-bold transition ${
-                  isDarkmodeEnabled
-                    ? "bg-white/10 text-white hover:bg-white/20"
-                    : "bg-gray-200 text-black hover:bg-gray-300"
-                }`}
-              >
-                No
-              </button>
-
-              <button
-                onClick={handleConfirmAction}
-                disabled={actionLoadingCarId === (selectedCar?.id || selectedCar?.Id)}
-                className={`group relative overflow-hidden flex-1 rounded-2xl py-3 font-bold active:translate-y-0 transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed ${modalContent.confirmClass}`}
-              >
-                <span className="relative z-10">
-                  {actionLoadingCarId === (selectedCar?.id || selectedCar?.Id)
-                    ? "Processing..."
-                    : modalContent.confirmText}
-                </span>
-                <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/20 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={actionModalOpen}
+        title={modalContent.title}
+        message={modalContent.message}
+        confirmText={
+          actionLoadingCarId === (selectedCar?.id || selectedCar?.Id)
+            ? "Processing..."
+            : modalContent.confirmText
+        }
+        cancelText="No"
+        onConfirm={handleConfirmAction}
+        onCancel={closeActionModal}
+        danger={modalContent.danger}
+      />
 
       <div className="max-w-[1400px] mx-auto">
         <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8">

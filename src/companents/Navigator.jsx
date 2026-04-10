@@ -1,42 +1,159 @@
-import { Route, Routes, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Route, Routes, useLocation } from "react-router-dom"
+import { useEffect } from "react"
 
-import Homepage from "../pages/Homepage";
-import Loginpage from "../pages/Loginpage";
-import Rentalpage from "../pages/Rentalpage";
-import Detailspage from "../pages/Detalispage";
-import Registerpage from "../pages/Registerpage";
-import Favoritepage from "../pages/Favoritepage";
-import Basketpage from "../pages/Basketpage";
-import AddCarpage from "../pages/AddCarpage";
-import Profilepage from "../pages/Profilepage";
-import Mycarspage from "../pages/Maycarspage";
-import UpdateCarpage from "../pages/UpdateCarpage";
-import OwnerCarpage from "../pages/OwnerCarpage";
+import Homepage from "../pages/Homepage"
+import Loginpage from "../pages/Loginpage"
+import Rentalpage from "../pages/Rentalpage"
+import Detailspage from "../pages/Detalispage"
+import Registerpage from "../pages/Registerpage"
+import Favoritepage from "../pages/Favoritepage"
+import Basketpage from "../pages/Basketpage"
+import AddCarpage from "../pages/AddCarpage"
+import Profilepage from "../pages/Profilepage"
+import Mycarspage from "../pages/Maycarspage"
+import UpdateCarpage from "../pages/UpdateCarpage"
+import OwnerCarpage from "../pages/OwnerCarpage"
+import Searchpage from "../pages/Searchpage"
+import MyCarRentalspage from "../pages/MyCarRentalspage"
+import PageTransition from "../companents/PageTransition"
 
 const Navigator = () => {
-  const { pathname } = useLocation();
+  const location = useLocation()
+  const { pathname } = location
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    window.scrollTo(0, 0)
+  }, [pathname])
 
   return (
-    <Routes>
-      <Route path="/" element={<Homepage />} />
-      <Route path="/login" element={<Loginpage />} />
-      <Route path="/rentals/:id" element={<Rentalpage />} />
-      <Route path="/details/:id" element={<Detailspage />} />
-      <Route path="/register" element={<Registerpage />} />
-      <Route path="/favorite" element={<Favoritepage />} />
-      <Route path="/basket" element={<Basketpage />} />
-      <Route path="/add-car" element={<AddCarpage />} />
-      <Route path="/profile" element={<Profilepage />} />
-      <Route path="/my-cars" element={<Mycarspage />} />
-      <Route path="/update-car/:id" element={<UpdateCarpage />} />
-      <Route path="/owner-cars/:ownerId" element={<OwnerCarpage />} />
-    </Routes>
-  );
-};
+    <Routes location={location} key={pathname}>
+      <Route
+        path="/"
+        element={
+          <PageTransition direction="left">
+            <Homepage />
+          </PageTransition>
+        }
+      />
 
-export default Navigator;
+      <Route
+        path="/login"
+        element={
+          <PageTransition direction="bottom">
+            <Loginpage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/rentals/:id"
+        element={
+          <PageTransition direction="right">
+            <Rentalpage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/details/:id"
+        element={
+          <PageTransition direction="right">
+            <Detailspage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/register"
+        element={
+          <PageTransition direction="bottom">
+            <Registerpage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/favorite"
+        element={
+          <PageTransition direction="left">
+            <Favoritepage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/basket"
+        element={
+          <PageTransition direction="left">
+            <Basketpage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/add-car"
+        element={
+          <PageTransition direction="top">
+            <AddCarpage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <PageTransition direction="top">
+            <Profilepage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/my-cars"
+        element={
+          <PageTransition direction="left">
+            <Mycarspage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/update-car/:id"
+        element={
+          <PageTransition direction="right">
+            <UpdateCarpage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/owner-cars/:ownerId"
+        element={
+          <PageTransition direction="right">
+            <OwnerCarpage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/search"
+        element={
+          <PageTransition direction="top">
+            <Searchpage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/my-car-rentals"
+        element={
+          <PageTransition direction="left">
+            <MyCarRentalspage />
+          </PageTransition>
+        }
+      />
+    </Routes>
+  )
+}
+
+export default Navigator

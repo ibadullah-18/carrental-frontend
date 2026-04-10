@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useDarkmode } from "../stores/useDarkmode";
-import Navbar from "../companents/Navbar";
 import Carcart from "../companents/Carcart";
 import Loading from "../companents/Loading";
 import Footer from "../companents/Footer";

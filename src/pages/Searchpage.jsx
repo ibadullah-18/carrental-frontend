@@ -1,13 +1,13 @@
-import Login from "../companents/Login";
+import Search from "../companents/Search"
 import Footer from "../companents/Footer"
 
-const Loginpage = () => {
+const Searchpage = () => {
     return (
         <div>
-            <Login />
+            <Search />
             <Footer />
         </div>
     )
 }
 
-export default Loginpage
+export default Searchpage
