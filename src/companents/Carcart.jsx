@@ -97,67 +97,88 @@ const Carcart = ({ car }) => {
         </div>
       </div>
 
-      <div className="relative p-3 sm:p-4 lg:p-5">
-        <div className="grid grid-cols-2 gap-2 text-[11px] sm:text-[13px]">
-          <div
-            className={`rounded-xl px-3 py-2 ${
-              isDarkmodeEnabled ? "bg-[#1b1b1b]" : "bg-[#f6f6f6]"
-            }`}
-          >
-            <p className={isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}>
-              İl
-            </p>
-            <p className="font-semibold">{car?.year || "—"}</p>
-          </div>
+<div className="relative p-3 sm:p-4 lg:p-5">
+  {/* NOMRE + IL */}
+  <div
+    className={`
+      flex items-center justify-between
+      rounded-2xl px-4 py-3
+      border
+      ${
+        isDarkmodeEnabled
+          ? "bg-[#171717] border-[#2a2a2a]"
+          : "bg-[#f7f7f7] border-[#ececec]"
+      }
+    `}
+  >
+    <div>
+      <p
+        className={`text-[10px] sm:text-xs uppercase tracking-wider ${
+          isDarkmodeEnabled ? "text-gray-500" : "text-gray-400"
+        }`}
+      >
+        Dövlət nömrəsi
+      </p>
 
-          <div
-            className={`rounded-xl px-3 py-2 ${
-              isDarkmodeEnabled ? "bg-[#1b1b1b]" : "bg-[#f6f6f6]"
-            }`}
-          >
-            <p className={isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}>
-              Nömrə
-            </p>
-            <p className="font-semibold">{car?.plateNumber || "—"}</p>
-          </div>
-        </div>
+      <h2 className="text-[16px] sm:text-[20px] lg:text-[22px] font-black tracking-[3px] mt-1">
+  {(car?.plateNumber || "—")
+    .replace(/^(\d{2})([A-Z]{2})(\d{3})$/, "$1 $2 $3")}
+</h2>
+    </div>
 
-        <div
-          className={`
-            mt-4 flex items-center justify-between
-            border-t pt-3
-            ${isDarkmodeEnabled ? "border-[#2a2a2a]" : "border-[#eeeeee]"}
-          `}
-        >
-          <div>
-            <p
-              className={`text-[11px] sm:text-xs ${
-                isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
-              }`}
-            >
-              Platformada göstərilir
-            </p>
-            <p className="text-[13px] sm:text-[15px] font-bold text-red-500">
-              Ətraflı bax
-            </p>
-          </div>
+    <div className="text-right">
+      <p
+        className={`text-[10px] sm:text-xs uppercase tracking-wider ${
+          isDarkmodeEnabled ? "text-gray-500" : "text-gray-400"
+        }`}
+      >
+        İl
+      </p>
 
-          <div className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center transition duration-300 group-hover:translate-x-1 group-hover:scale-105">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-4 h-4"
-            >
-              <path
-                fillRule="evenodd"
-                d="M16.28 11.47a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L14.69 12 9.97 7.28a.75.75 0 111.06-1.06l5.25 5.25z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
+      <h3 className="text-[15px] sm:text-[18px] font-bold mt-1 text-red-500">
+        {car?.year || "—"}
+      </h3>
+    </div>
+  </div>
+
+  {/* ALT HISSE */}
+  <div
+    className={`
+      mt-4 flex items-center justify-between
+      border-t pt-3
+      ${isDarkmodeEnabled ? "border-[#2a2a2a]" : "border-[#eeeeee]"}
+    `}
+  >
+    <div>
+      <p
+        className={`text-[11px] sm:text-xs ${
+          isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
+        }`}
+      >
+        Platformada göstərilir
+      </p>
+
+      <p className="text-[13px] sm:text-[15px] font-bold text-red-500">
+        Ətraflı bax
+      </p>
+    </div>
+
+    <div className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center transition duration-300 group-hover:translate-x-1 group-hover:scale-105">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-4 h-4"
+      >
+        <path
+          fillRule="evenodd"
+          d="M16.28 11.47a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L14.69 12 9.97 7.28a.75.75 0 111.06-1.06l5.25 5.25z"
+          clipRule="evenodd"
+        />
+      </svg>
+    </div>
+  </div>
+</div>
     </Link>
   );
 };

@@ -123,6 +123,14 @@ const Login = () => {
               className="w-full p-2.5 sm:p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400 text-sm sm:text-base"
             />
           </div>
+          <div className="text-right -mt-2">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-yellow-400 hover:text-yellow-300 hover:underline transition"
+            >
+              Şifrəni unutmusunuz?
+            </Link>
+          </div>
 
           {error && (
             <p className="text-red-400 text-sm">

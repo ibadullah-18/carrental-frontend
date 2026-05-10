@@ -3,14 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import { apiFetch } from "../utils/apiFetch";
 import ConfirmModal from "../companents/ConfirmModal";
+import defaultImage from "../assets/download.png";
 
-const API_BASE = "http://localhost:5248";
-
-const ACTIONS = {
-  DEACTIVATE: "deactivate",
-  ACTIVATE: "activate",
-  HARD_DELETE: "hard-delete",
-};
+const API_BASE = "https://localhost:52247";
 
 const MyCars = () => {
   const navigate = useNavigate();
@@ -21,24 +16,13 @@ const MyCars = () => {
   const [pageError, setPageError] = useState("");
   const [toast, setToast] = useState(null);
 
-  const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
-  const [selectedAction, setSelectedAction] = useState(null);
-  const [actionLoadingCarId, setActionLoadingCarId] = useState(null);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 2500);
-  };
-
-  const getImageUrl = (path) => {
-    if (!path) return "https://placehold.co/600x400?text=No+Image";
-
-    if (path.startsWith("http://") || path.startsWith("https://")) {
-      return path;
-    }
-
-    return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
   };
 
   const normalizeCars = (data) => {
@@ -49,6 +33,41 @@ const MyCars = () => {
     return [];
   };
 
+  const getImageUrl = (path) => {
+    if (!path) return defaultImage;
+    if (path.startsWith("http")) return path;
+    return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+  };
+
+  const getCarId = (car) => car?.id || car?.carId || car?.Id;
+
+  const formatPlateNumber = (plateNumber) => {
+    if (!plateNumber) return "—";
+    return plateNumber.replace(/^(\d{2})([A-ZƏÖÜĞÇŞIİ]{1,3})(\d{2,4})$/i, "$1 $2 $3");
+  };
+
+  const getStatusInfo = (status) => {
+    const value = Number(status);
+
+    if (value === 1) {
+      return { text: "Aktiv", className: "bg-green-500 text-white" };
+    }
+
+    if (value === 2) {
+      return { text: "Gözləmədə", className: "bg-yellow-400 text-black" };
+    }
+
+    if (value === 3) {
+      return { text: "Rədd edilib", className: "bg-red-500 text-white" };
+    }
+
+    if (value === 4) {
+      return { text: "Passiv", className: "bg-gray-500 text-white" };
+    }
+
+    return { text: "Naməlum", className: "bg-gray-400 text-white" };
+  };
+
   const fetchMyCars = async () => {
     try {
       setLoading(true);
@@ -57,20 +76,21 @@ const MyCars = () => {
       const response = await apiFetch("/api/Cars/my-cars", {
         method: "GET",
         headers: {
-          Accept: "*/*",
+          Accept: "application/json",
         },
       });
 
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(data?.message || data?.Message || "My cars could not be loaded");
+        throw new Error(
+          data?.message || data?.Message || "Maşınlar yüklənmədi"
+        );
       }
 
       setCars(normalizeCars(data));
     } catch (error) {
-      console.log("MyCars error:", error);
-      setPageError(error.message || "An error occurred while loading cars");
+      setPageError(error.message || "Maşınlar yüklənərkən xəta baş verdi");
     } finally {
       setLoading(false);
     }
@@ -80,146 +100,28 @@ const MyCars = () => {
     fetchMyCars();
   }, []);
 
-  const handleCardClick = (carId) => {
-    navigate(`/details/${carId}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const getStatusKey = (statusValue) => {
-    return String(statusValue || "").trim().toLowerCase();
-  };
-
-  const isAvailableStatus = (statusValue) => {
-    const status = getStatusKey(statusValue);
-    return status === "available" || status === "active";
-  };
-
-  const isPassiveStatus = (statusValue) => {
-    const status = getStatusKey(statusValue);
-    return status === "passive" || status === "inactive";
-  };
-
-  const isRentedStatus = (statusValue) => {
-    const status = getStatusKey(statusValue);
-    return status === "rented";
-  };
-
-  const getStatusInfo = (statusValue) => {
-    const status = getStatusKey(statusValue);
-
-    if (status === "available" || status === "active") {
-      return {
-        text: "Available",
-        className: "bg-green-500 text-white border-green-300/40",
-      };
-    }
-
-    if (status === "passive" || status === "inactive") {
-      return {
-        text: "Passive",
-        className: "bg-gray-500 text-white border-gray-300/40",
-      };
-    }
-
-    if (status === "rented") {
-      return {
-        text: "Rented",
-        className: "bg-red-500 text-white border-red-300/40",
-      };
-    }
-
-    return {
-      text: statusValue || "Unknown",
-      className: isDarkmodeEnabled
-        ? "bg-white/10 text-white border-white/10"
-        : "bg-gray-200 text-black border-gray-300",
-    };
-  };
-
-  const openActionModal = (car, action) => {
+  const openDeleteModal = (car) => {
     setSelectedCar(car);
-    setSelectedAction(action);
-    setActionModalOpen(true);
+    setDeleteModalOpen(true);
   };
 
-  const closeActionModal = () => {
-    if (actionLoadingCarId) return;
-    setActionModalOpen(false);
+  const closeDeleteModal = () => {
+    if (deleteLoadingId) return;
     setSelectedCar(null);
-    setSelectedAction(null);
+    setDeleteModalOpen(false);
   };
 
-  const getActionModalContent = () => {
-    if (selectedAction === ACTIONS.DEACTIVATE) {
-      return {
-        title: "Deactivate Car",
-        message: "Are you sure you want to deactivate this car?",
-        confirmText: "Yes, Deactivate",
-        danger: false,
-      };
-    }
-
-    if (selectedAction === ACTIONS.ACTIVATE) {
-      return {
-        title: "Activate Car",
-        message: "Are you sure you want to activate this car?",
-        confirmText: "Yes, Activate",
-        danger: false,
-      };
-    }
-
-    return {
-      title: "Delete Permanently",
-      message: "Are you sure you want to permanently delete this car?",
-      confirmText: "Yes, Delete",
-      danger: true,
-    };
-  };
-
-  const handleConfirmAction = async () => {
-    const carId = selectedCar?.id || selectedCar?.Id;
-    const statusValue = selectedCar?.status || selectedCar?.Status;
-
-    if (!carId || !selectedAction) return;
+  const handleDeleteCar = async () => {
+    const carId = getCarId(selectedCar);
+    if (!carId) return;
 
     try {
-      setActionLoadingCarId(carId);
+      setDeleteLoadingId(carId);
 
-      let endpoint = "";
-      let method = "DELETE";
-      let successMessage = "";
-
-      if (selectedAction === ACTIONS.DEACTIVATE) {
-        if (!isAvailableStatus(statusValue)) {
-          throw new Error("Only available cars can be deactivated");
-        }
-        endpoint = `/api/Cars/${carId}`;
-        method = "DELETE";
-        successMessage = "Car deactivated successfully";
-      }
-
-      if (selectedAction === ACTIONS.ACTIVATE) {
-        if (!isPassiveStatus(statusValue)) {
-          throw new Error("Only passive cars can be activated");
-        }
-        endpoint = `/api/Cars/${carId}/activate`;
-        method = "PUT";
-        successMessage = "Car activated successfully";
-      }
-
-      if (selectedAction === ACTIONS.HARD_DELETE) {
-        if (!(isAvailableStatus(statusValue) || isPassiveStatus(statusValue))) {
-          throw new Error("Only available or passive cars can be permanently deleted");
-        }
-        endpoint = `/api/Cars/${carId}/hard-delete`;
-        method = "DELETE";
-        successMessage = "Car permanently deleted";
-      }
-
-      const response = await apiFetch(endpoint, {
-        method,
+      const response = await apiFetch(`/api/Cars/${carId}`, {
+        method: "DELETE",
         headers: {
-          Accept: "*/*",
+          Accept: "application/json",
         },
       });
 
@@ -227,155 +129,30 @@ const MyCars = () => {
 
       if (!response.ok) {
         throw new Error(
-          data?.message || data?.Message || "Action could not be completed"
+          data?.message || data?.Message || "Maşın silinmədi"
         );
       }
 
-      if (selectedAction === ACTIONS.HARD_DELETE) {
-        setCars((prev) => prev.filter((car) => (car.id || car.Id) !== carId));
-      } else if (selectedAction === ACTIONS.DEACTIVATE) {
-        setCars((prev) =>
-          prev.map((car) =>
-            (car.id || car.Id) === carId
-              ? { ...car, status: "Passive", Status: "Passive" }
-              : car
-          )
-        );
-      } else if (selectedAction === ACTIONS.ACTIVATE) {
-        setCars((prev) =>
-          prev.map((car) =>
-            (car.id || car.Id) === carId
-              ? { ...car, status: "Available", Status: "Available" }
-              : car
-          )
-        );
-      }
-
-      showToast(successMessage, "success");
-      closeActionModal();
+      setCars((prev) => prev.filter((car) => getCarId(car) !== carId));
+      showToast("Maşın uğurla silindi", "success");
+      closeDeleteModal();
     } catch (error) {
-      console.log("Action error:", error);
-      showToast(error.message || "An error occurred", "error");
+      showToast(error.message || "Silinmə zamanı xəta baş verdi", "error");
     } finally {
-      setActionLoadingCarId(null);
+      setDeleteLoadingId(null);
     }
   };
-
-  const renderActionButtons = (car) => {
-    const carId = car.id || car.Id;
-    const statusValue = car.status || car.Status;
-    const loadingThisCard = actionLoadingCarId === carId;
-
-    if (isRentedStatus(statusValue)) {
-      return (
-        <div
-          className={`mt-3 rounded-2xl border px-4 py-4 text-center ${
-            isDarkmodeEnabled
-              ? "bg-[#111111] border-white/10 text-gray-300"
-              : "bg-gray-100 border-gray-200 text-gray-600"
-          }`}
-        >
-          <div className="text-sm font-semibold">Unavailable for actions</div>
-          <div className="text-xs mt-1 opacity-80">
-            This car is currently rented
-          </div>
-        </div>
-      );
-    }
-
-    if (isAvailableStatus(statusValue)) {
-      return (
-        <div className="mt-3 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => openActionModal(car, ACTIONS.DEACTIVATE)}
-              disabled={loadingThisCard}
-              className="group relative overflow-hidden px-3 py-2.5 rounded-xl bg-orange-500 text-white font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span className="relative z-10">Deactivate</span>
-              <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/20 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
-            </button>
-
-            <button
-              onClick={() => openActionModal(car, ACTIONS.HARD_DELETE)}
-              disabled={loadingThisCard}
-              className="group relative overflow-hidden px-3 py-2.5 rounded-xl bg-red-500 text-white font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span className="relative z-10">Delete Permanently</span>
-              <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/20 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
-            </button>
-          </div>
-
-          <button
-            onClick={() => navigate(`/update-car/${carId}`)}
-            disabled={loadingThisCard}
-            className="relative overflow-hidden w-full px-3 py-2.5 rounded-xl bg-yellow-400 text-black font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-white/30 before:skew-x-12 before:transition-all before:duration-500 hover:before:left-[120%]"
-          >
-            Update
-          </button>
-        </div>
-      );
-    }
-
-    if (isPassiveStatus(statusValue)) {
-      return (
-        <div className="mt-3 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => openActionModal(car, ACTIONS.ACTIVATE)}
-              disabled={loadingThisCard}
-              className="group relative overflow-hidden px-3 py-2.5 rounded-xl bg-green-500 text-white font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span className="relative z-10">Activate</span>
-              <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/20 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
-            </button>
-
-            <button
-              onClick={() => openActionModal(car, ACTIONS.HARD_DELETE)}
-              disabled={loadingThisCard}
-              className="group relative overflow-hidden px-3 py-2.5 rounded-xl bg-red-500 text-white font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span className="relative z-10">Delete Permanently</span>
-              <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/20 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
-            </button>
-          </div>
-
-          <button
-            onClick={() => navigate(`/update-car/${carId}`)}
-            disabled={loadingThisCard}
-            className="relative overflow-hidden w-full px-3 py-2.5 rounded-xl bg-yellow-400 text-black font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-white/30 before:skew-x-12 before:transition-all before:duration-500 hover:before:left-[120%]"
-          >
-            Update
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div
-        className={`mt-3 rounded-2xl border px-4 py-4 text-center ${
-          isDarkmodeEnabled
-            ? "bg-[#111111] border-white/10 text-gray-300"
-            : "bg-gray-100 border-gray-200 text-gray-600"
-        }`}
-      >
-        <div className="text-sm font-semibold">No actions available</div>
-      </div>
-    );
-  };
-
-  const modalContent = getActionModalContent();
 
   if (loading) {
     return (
       <div
-        className={`min-h-screen flex items-center justify-center px-4 ${
+        className={`min-h-screen flex items-center justify-center ${
           isDarkmodeEnabled ? "bg-[#111111] text-white" : "bg-white text-black"
         }`}
       >
         <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin mx-auto mb-4"></div>
-          <p className="text-lg font-semibold">Loading your cars...</p>
+          <div className="w-12 h-12 rounded-full border-4 border-red-500 border-t-transparent animate-spin mx-auto mb-4"></div>
+          <p className="text-lg font-semibold">Maşınlar yüklənir...</p>
         </div>
       </div>
     );
@@ -390,10 +167,10 @@ const MyCars = () => {
       {toast && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999]">
           <div
-            className={`px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border text-sm sm:text-base font-semibold ${
+            className={`px-5 py-3 rounded-2xl shadow-2xl text-sm font-semibold ${
               toast.type === "success"
-                ? "bg-green-500/90 text-white border-green-300"
-                : "bg-red-500/90 text-white border-red-300"
+                ? "bg-green-500 text-white"
+                : "bg-red-500 text-white"
             }`}
           >
             {toast.message}
@@ -402,40 +179,36 @@ const MyCars = () => {
       )}
 
       <ConfirmModal
-        isOpen={actionModalOpen}
-        title={modalContent.title}
-        message={modalContent.message}
-        confirmText={
-          actionLoadingCarId === (selectedCar?.id || selectedCar?.Id)
-            ? "Processing..."
-            : modalContent.confirmText
-        }
-        cancelText="No"
-        onConfirm={handleConfirmAction}
-        onCancel={closeActionModal}
-        danger={modalContent.danger}
+        isOpen={deleteModalOpen}
+        title="Maşını sil"
+        message="Bu maşını silmək istədiyinizə əminsiniz?"
+        confirmText={deleteLoadingId ? "Silinir..." : "Bəli, sil"}
+        cancelText="Xeyr"
+        onConfirm={handleDeleteCar}
+        onCancel={closeDeleteModal}
+        danger
       />
 
       <div className="max-w-[1400px] mx-auto">
         <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
-              My Cars
+              Mənim maşınlarım
             </h1>
             <p
               className={`mt-2 text-sm sm:text-base ${
                 isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
               }`}
             >
-              Here you can manage your cars.
+              Əlavə etdiyiniz maşınları buradan idarə edə bilərsiniz.
             </p>
           </div>
 
           <button
             onClick={fetchMyCars}
-            className="relative overflow-hidden px-4 sm:px-5 py-2.5 rounded-xl bg-yellow-400 text-black font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-white/30 before:skew-x-12 before:transition-all before:duration-500 hover:before:left-[120%]"
+            className="px-4 sm:px-5 py-2.5 rounded-xl bg-red-500 text-white font-bold shadow-md hover:shadow-xl hover:-translate-y-1 transition"
           >
-            Refresh
+            Yenilə
           </button>
         </div>
 
@@ -453,114 +226,133 @@ const MyCars = () => {
                 : "bg-white border-gray-200"
             }`}
           >
-            <h2 className="text-xl sm:text-2xl font-bold mb-2">No cars found</h2>
-            <p
-              className={`text-sm sm:text-base ${
-                isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-              }`}
-            >
-              You do not have any cars yet.
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">
+              Maşın tapılmadı
+            </h2>
+            <p className={isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"}>
+              Hələ heç bir maşın əlavə etməmisiniz.
             </p>
           </div>
         )}
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {cars.map((car) => {
-            const images = Array.isArray(car.images)
-              ? car.images
-              : Array.isArray(car.Images)
-              ? car.Images
-              : Array.isArray(car?.images?.$values)
-              ? car.images.$values
-              : Array.isArray(car?.Images?.$values)
-              ? car.Images.$values
-              : [];
-
-            const mainImage =
-              images.find((img) => img.isMain || img.IsMain) ||
-              images[0] ||
-              null;
-
-            const carId = car.id || car.Id;
+            const carId = getCarId(car);
             const statusInfo = getStatusInfo(car.status || car.Status);
+            const imageUrl = getImageUrl(car.mainImageUrl || car.MainImageUrl);
 
             return (
               <div
                 key={carId}
-                className={`rounded-[22px] overflow-hidden border shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ${
+                className={`group rounded-[24px] overflow-hidden border shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ${
                   isDarkmodeEnabled
                     ? "bg-[#1a1a1a] border-white/10"
                     : "bg-white border-gray-200"
                 }`}
               >
                 <div
+                  onClick={() => navigate(`/details/${carId}`)}
                   className="relative aspect-[4/3] overflow-hidden cursor-pointer"
-                  onClick={() => handleCardClick(carId)}
                 >
                   <img
-                    src={getImageUrl(
-                      mainImage?.imageUrl ||
-                        mainImage?.ImageUrl ||
-                        car.mainImageUrl ||
-                        car.MainImageUrl
-                    )}
-                    alt={`${car.brand || car.Brand} ${car.model || car.Model}`}
-                    className="w-full h-full object-cover"
+                    src={imageUrl}
+                    alt={`${car.brand || ""} ${car.model || ""}`}
+                    onError={(e) => {
+                      e.currentTarget.src = defaultImage;
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"></div>
 
-                  <div className="absolute top-2 left-2">
+                  <div className="absolute top-3 left-3">
                     <span
-                      className={`border text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full ${statusInfo.className}`}
+                      className={`text-[11px] font-bold px-3 py-1 rounded-full ${statusInfo.className}`}
                     >
                       {statusInfo.text}
                     </span>
                   </div>
 
-                  <div className="absolute bottom-2 left-2 right-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <h2 className="text-white font-bold text-sm sm:text-base line-clamp-1">
-                        {car.brand || car.Brand} {car.model || car.Model}
-                      </h2>
-                      <span className="bg-yellow-400 text-black text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
-                        {car.year || car.Year}
-                      </span>
+                  {car.isVip && (
+                    <div className="absolute top-3 right-3 bg-yellow-400 text-black text-[11px] font-black px-3 py-1 rounded-full">
+                      VIP
                     </div>
+                  )}
+
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <h2 className="text-white font-bold text-xl line-clamp-1">
+                      {car.brand || "Marka"} {car.model || "Model"}
+                    </h2>
+                    <p className="text-white/85 text-sm mt-1">
+                      {car.city || "Şəhər qeyd olunmayıb"}
+                    </p>
                   </div>
                 </div>
 
-                <div className="p-2.5 sm:p-3 md:p-4">
-                  <div className="space-y-1">
-                    <p
-                      className={`text-xs sm:text-sm ${
-                        isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                      }`}
-                    >
-                      <span className="font-semibold">Price:</span>{" "}
-                      {car.pricePerDay || car.PricePerDay} AZN/day
-                    </p>
+                <div className="p-4">
+                  <div
+                    className={`rounded-2xl border px-4 py-3 ${
+                      isDarkmodeEnabled
+                        ? "bg-[#111111] border-white/10"
+                        : "bg-[#f7f7f7] border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p
+                          className={`text-[11px] uppercase tracking-wider ${
+                            isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          Dövlət nömrəsi
+                        </p>
+                        <h3 className="text-[18px] font-black tracking-[3px] mt-1">
+                          {formatPlateNumber(car.plateNumber)}
+                        </h3>
+                      </div>
 
-                    <p
-                      className={`text-xs sm:text-sm ${
-                        isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                      }`}
-                    >
-                      <span className="font-semibold">Location:</span>{" "}
-                      {car.location || car.Location}
-                    </p>
-
-                    <p
-                      className={`text-xs sm:text-sm ${
-                        isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                      }`}
-                    >
-                      <span className="font-semibold">Status:</span>{" "}
-                      {statusInfo.text}
-                    </p>
+                      <div className="text-right">
+                        <p
+                          className={`text-[11px] uppercase tracking-wider ${
+                            isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          İl
+                        </p>
+                        <h3 className="text-[18px] font-bold text-red-500 mt-1">
+                          {car.year || "—"}
+                        </h3>
+                      </div>
+                    </div>
                   </div>
 
-                  {renderActionButtons(car)}
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => navigate(`/update-car/${carId}`)}
+                      className="h-[44px] rounded-xl bg-yellow-400 text-black font-bold hover:bg-yellow-500 hover:-translate-y-1 transition"
+                    >
+                      Yenilə
+                    </button>
+
+                    <button
+                      onClick={() => openDeleteModal(car)}
+                      disabled={deleteLoadingId === carId}
+                      className="h-[44px] rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 hover:-translate-y-1 transition disabled:opacity-60"
+                    >
+                      Sil
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => navigate(`/details/${carId}`)}
+                    className={`mt-2 w-full h-[42px] rounded-xl border font-semibold transition ${
+                      isDarkmodeEnabled
+                        ? "border-white/10 hover:bg-white/10"
+                        : "border-gray-200 hover:bg-gray-100"
+                    }`}
+                  >
+                    Ətraflı bax
+                  </button>
                 </div>
               </div>
             );

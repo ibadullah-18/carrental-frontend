@@ -13,6 +13,7 @@ import UpdateCarpage from "../pages/UpdateCarpage"
 import OwnerCarpage from "../pages/OwnerCarpage"
 import Searchpage from "../pages/Searchpage"
 import PageTransition from "../companents/PageTransition"
+import ForgotPasswordpage from "../pages/ForgotPasswordpage"
 
 const Navigator = () => {
   const location = useLocation()
@@ -122,7 +123,16 @@ const Navigator = () => {
           </PageTransition>
         }
       />
+      <Route
+        path="/forgot-password"
+        element={
+          <PageTransition direction="bottom">
+            <ForgotPasswordpage />
+          </PageTransition>
+        }
+      />
     </Routes>
+    
   )
 }
 

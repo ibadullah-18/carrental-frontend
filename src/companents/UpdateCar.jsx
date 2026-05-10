@@ -1,785 +1,620 @@
-import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import { useDarkmode } from "../stores/useDarkmode"
-import { getAccessToken } from "../utils/auth"
-import { apiFetch } from "../utils/apiFetch"
-import { REGION_OPTIONS } from "../data/regions"
-import {
-  BODY_TYPE_OPTIONS,
-  CAR_BRANDS,
-  COLOR_OPTIONS,
-  FUEL_OPTIONS,
-  TRANSMISSION_OPTIONS,
-  YEAR_OPTIONS,
-} from "../data/carOptions"
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDarkmode } from "../stores/useDarkmode";
+import { apiFetch } from "../utils/apiFetch";
+import { REGION_OPTIONS } from "../data/regions";
+import { CAR_BRANDS, COLOR_OPTIONS, YEAR_OPTIONS } from "../data/carOptions";
+import SmartSelect from "../companents/SmartSelect";
 
-const API_BASE = "http://localhost:5248"
+const API_BASE = "https://localhost:52247";
 
 const UpdateCar = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { isDarkmodeEnabled } = useDarkmode()
-  const token = getAccessToken()
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { isDarkmodeEnabled } = useDarkmode();
 
-  const [brand, setBrand] = useState("")
-  const [model, setModel] = useState("")
-  const [year, setYear] = useState("")
-  const [pricePerDay, setPricePerDay] = useState("")
-  const [fuelType, setFuelType] = useState("")
-  const [transmission, setTransmission] = useState("")
-  const [mileage, setMileage] = useState("")
-  const [description, setDescription] = useState("")
-  const [location, setLocation] = useState("")
-  const [color, setColor] = useState("")
-  const [bodyType, setBodyType] = useState("")
+  const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
+  const [year, setYear] = useState("");
+  const [color, setColor] = useState("");
+  const [city, setCity] = useState("");
+  const [description, setDescription] = useState("");
 
-  const [images, setImages] = useState([])
-  const [mainNewImageIndex, setMainNewImageIndex] = useState(0)
+  const [existingMedia, setExistingMedia] = useState([]);
+  const [newMediaFiles, setNewMediaFiles] = useState([]);
 
-  const [existingImages, setExistingImages] = useState([])
-  const [visibleBrandCount, setVisibleBrandCount] = useState(6)
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [deletingImageId, setDeletingImageId] = useState(null)
-  const [settingMainImageId, setSettingMainImageId] = useState(null)
+  const [deletingMediaId, setDeletingMediaId] = useState(null);
+  const [settingMainMediaId, setSettingMainMediaId] = useState(null);
 
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const getImageUrl = (path) => {
-    if (!path) return "https://placehold.co/600x400?text=No+Image"
+  const brandOptions = useMemo(() => CAR_BRANDS.map((item) => item.brand), []);
 
-    if (path.startsWith("http://") || path.startsWith("https://")) {
-      return path
-    }
+  const modelOptions = useMemo(() => {
+    const selectedBrand = CAR_BRANDS.find(
+      (item) => item.brand.toLowerCase() === brand.toLowerCase()
+    );
 
-    return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`
-  }
+    return selectedBrand?.models || [];
+  }, [brand]);
 
-  const availableModels = useMemo(() => {
-    const selectedBrand = CAR_BRANDS.find((item) => item.brand === brand)
-    return selectedBrand ? selectedBrand.models : []
-  }, [brand])
+  const getMediaType = (media) => {
+    const fileType = media?.type || "";
+    const mediaType = Number(media?.mediaType);
+    const url = String(media?.fileUrl || media?.url || "").toLowerCase();
 
-  const imagePreviewUrls = useMemo(() => {
-    return images.map((file) => ({
+    if (mediaType === 2 || fileType.startsWith("video/")) return "video";
+    if (mediaType === 1 || fileType.startsWith("image/")) return "image";
+
+    if (/\.(mp4|mov|avi|mkv|webm|m4v)$/i.test(url)) return "video";
+    return "image";
+  };
+
+  const mediaPreviewUrls = useMemo(() => {
+    return newMediaFiles.map((file) => ({
       file,
+      type: getMediaType(file),
       url: URL.createObjectURL(file),
-    }))
-  }, [images])
+    }));
+  }, [newMediaFiles]);
 
   useEffect(() => {
     return () => {
-      imagePreviewUrls.forEach((item) => URL.revokeObjectURL(item.url))
-    }
-  }, [imagePreviewUrls])
+      mediaPreviewUrls.forEach((item) => URL.revokeObjectURL(item.url));
+    };
+  }, [mediaPreviewUrls]);
 
-  const normalizeImages = (carData) => {
-    if (Array.isArray(carData?.images)) return carData.images
-    if (Array.isArray(carData?.Images)) return carData.Images
-    if (Array.isArray(carData?.images?.$values)) return carData.images.$values
-    if (Array.isArray(carData?.Images?.$values)) return carData.Images.$values
-    return []
-  }
+  const getMediaUrl = (path) => {
+    if (!path) return "https://placehold.co/600x400?text=No+Media";
+    if (path.startsWith("http")) return path;
+    return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+  };
+
+  const normalizeMedia = (carData) => {
+    const media = carData?.media || carData?.Media;
+
+    if (Array.isArray(media)) {
+      return [...media].sort(
+        (a, b) => Number(a.displayOrder || 0) - Number(b.displayOrder || 0)
+      );
+    }
+
+    if (Array.isArray(media?.$values)) {
+      return [...media.$values].sort(
+        (a, b) => Number(a.displayOrder || 0) - Number(b.displayOrder || 0)
+      );
+    }
+
+    return [];
+  };
 
   const fillForm = (carData) => {
-    setBrand(carData.brand || carData.Brand || "")
-    setModel(carData.model || carData.Model || "")
-    setYear(String(carData.year || carData.Year || ""))
-    setPricePerDay(String(carData.pricePerDay || carData.PricePerDay || ""))
-    setFuelType(carData.fuelType || carData.FuelType || "")
-    setTransmission(carData.transmission || carData.Transmission || "")
-    setMileage(String(carData.mileage || carData.Mileage || ""))
-    setDescription(carData.description || carData.Description || "")
-    setLocation(carData.location || carData.Location || "")
-    setColor(carData.color || carData.Color || "")
-    setBodyType(String(carData.bodyType ?? carData.BodyType ?? ""))
-    setExistingImages(normalizeImages(carData))
-  }
+    setBrand(carData.brand || "");
+    setModel(carData.model || "");
+    setYear(String(carData.year || ""));
+    setColor(carData.color || "");
+    setCity(carData.city || "");
+    setDescription(carData.description || "");
+    setExistingMedia(normalizeMedia(carData));
+  };
+
+  const getErrorMessage = (data, fallback) => {
+    if (data?.errors) {
+      const firstError = Object.values(data.errors)?.flat()?.[0];
+      return firstError || fallback;
+    }
+
+    return data?.message || data?.Message || data?.title || fallback;
+  };
 
   const fetchCar = async () => {
     try {
-      setLoading(true)
-      setError("")
-
-      if (!token) {
-        setError("You must be logged in")
-        return
-      }
+      setLoading(true);
+      setError("");
 
       const response = await apiFetch(`/api/Cars/${id}`, {
         method: "GET",
         headers: {
-          Accept: "*/*",
+          Accept: "application/json",
         },
-      })
+      });
 
-      const data = await response.json().catch(() => null)
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(data?.Message || data?.message || "Car not found")
+        throw new Error(getErrorMessage(data, "Maşın məlumatları yüklənmədi"));
       }
 
-      fillForm(data)
+      fillForm(data?.data || data);
     } catch (err) {
-      console.log(err)
-      setError(err.message || "Car data could not be loaded")
+      setError(err.message || "Maşın məlumatları yüklənmədi");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchCar()
-  }, [id])
+    fetchCar();
+  }, [id]);
 
-  const handleImageChange = (e) => {
-    const selectedFiles = Array.from(e.target.files || [])
-    if (selectedFiles.length === 0) return
+  const handleMediaChange = (e) => {
+    const files = Array.from(e.target.files || []);
 
-    setImages((prev) => [...prev, ...selectedFiles])
-    e.target.value = ""
-  }
+    const allowedFiles = files.filter(
+      (file) => file.type.startsWith("image/") || file.type.startsWith("video/")
+    );
 
-  const handleRemoveSelectedImage = (removeIndex) => {
-    setImages((prev) => {
-      const updated = prev.filter((_, index) => index !== removeIndex)
+    setNewMediaFiles((prev) => [...prev, ...allowedFiles]);
+    e.target.value = "";
+  };
 
-      setMainNewImageIndex((prevMainIndex) => {
-        if (updated.length === 0) return 0
-        if (removeIndex === prevMainIndex) return 0
-        if (removeIndex < prevMainIndex) return prevMainIndex - 1
-        return prevMainIndex >= updated.length ? 0 : prevMainIndex
-      })
+  const handleRemoveNewMedia = (index) => {
+    setNewMediaFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
-      return updated
-    })
-  }
+  const handleDeleteMedia = async (mediaId) => {
+    if (!mediaId) return;
 
-  const handleSetSelectedMainImage = (index) => {
-    setMainNewImageIndex(index)
-  }
-
-  const handleDeleteImage = async (imageId) => {
     try {
-      setDeletingImageId(imageId)
-      setError("")
-      setSuccess("")
+      setDeletingMediaId(mediaId);
+      setError("");
+      setSuccess("");
 
-      const response = await apiFetch(`/api/Cars/images/${imageId}`, {
+      const response = await apiFetch(`/api/Cars/media/${mediaId}`, {
         method: "DELETE",
         headers: {
-          Accept: "*/*",
+          Accept: "application/json",
         },
-      })
+      });
 
-      const data = await response.json().catch(() => null)
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(data?.Message || data?.message || "Image could not be deleted")
+        throw new Error(getErrorMessage(data, "Media silinmədi"));
       }
 
-      setSuccess("Image deleted successfully")
-      await fetchCar()
+      setExistingMedia((prev) => prev.filter((item) => item.id !== mediaId));
+      setSuccess("Media uğurla silindi");
     } catch (err) {
-      console.log(err)
-      setError(err.message || "Image delete failed")
+      setError(err.message || "Media silinərkən xəta baş verdi");
     } finally {
-      setDeletingImageId(null)
+      setDeletingMediaId(null);
     }
-  }
+  };
 
-  const handleSetMainImage = async (imageId) => {
+  const handleSetMainMedia = async (mediaId) => {
+    if (!mediaId) return;
+
     try {
-      setSettingMainImageId(imageId)
-      setError("")
-      setSuccess("")
+      setSettingMainMediaId(mediaId);
+      setError("");
+      setSuccess("");
 
-      const response = await apiFetch(`/api/Cars/images/${imageId}/set-main`, {
+      const response = await apiFetch(`/api/Cars/media/${mediaId}/set-main`, {
         method: "PUT",
         headers: {
-          Accept: "*/*",
+          Accept: "application/json",
         },
-      })
+      });
 
-      const data = await response.json().catch(() => null)
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(data?.Message || data?.message || "Main image could not be updated")
+        throw new Error(getErrorMessage(data, "Əsas şəkil dəyişdirilmədi"));
       }
 
-      setSuccess("Main image updated successfully")
-      await fetchCar()
+      setSuccess("Əsas şəkil yeniləndi");
+      await fetchCar();
     } catch (err) {
-      console.log(err)
-      setError(err.message || "Main image update failed")
+      setError(err.message || "Əsas şəkil yenilənərkən xəta baş verdi");
     } finally {
-      setSettingMainImageId(null)
+      setSettingMainMediaId(null);
     }
-  }
+  };
+
+  const uploadNewMedia = async () => {
+    if (newMediaFiles.length === 0) return;
+
+    const formData = new FormData();
+    formData.append("Purpose", "1");
+
+    newMediaFiles.forEach((file) => {
+      formData.append("Files", file);
+    });
+
+    const response = await apiFetch(`/api/Cars/${id}/media`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(data, "Yeni media əlavə olunmadı"));
+    }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    setError("")
-    setSuccess("")
+    setError("");
+    setSuccess("");
 
-    if (!token) {
-      setError("You must be logged in")
-      return
-    }
-
-    if (
-      !brand ||
-      !model ||
-      !year ||
-      !pricePerDay ||
-      !fuelType ||
-      !transmission ||
-      !mileage ||
-      !description ||
-      !location ||
-      !color ||
-      bodyType === ""
-    ) {
-      setError("Please fill in all fields")
-      return
-    }
+    if (!brand.trim()) return setError("Marka daxil edin");
+    if (!model.trim()) return setError("Model daxil edin");
+    if (!year.trim()) return setError("İl seçin və ya daxil edin");
+    if (!color.trim()) return setError("Rəng seçin və ya daxil edin");
+    if (!city.trim()) return setError("Şəhər seçin və ya daxil edin");
+    if (!description.trim()) return setError("Açıqlama daxil edin");
 
     try {
-      setSubmitting(true)
+      setSubmitting(true);
 
-      const updateFormData = new FormData()
-      updateFormData.append("Brand", brand)
-      updateFormData.append("Model", model)
-      updateFormData.append("Year", year)
-      updateFormData.append("PricePerDay", pricePerDay)
-      updateFormData.append("FuelType", fuelType)
-      updateFormData.append("Transmission", transmission)
-      updateFormData.append("Mileage", mileage)
-      updateFormData.append("Description", description)
-      updateFormData.append("Location", location)
-      updateFormData.append("Color", color)
-      updateFormData.append("BodyType", bodyType)
-
-      const updateResponse = await apiFetch(`/api/Cars/${id}`, {
+      const response = await apiFetch(`/api/Cars/${id}`, {
         method: "PUT",
-        body: updateFormData,
-      })
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          brand: brand.trim(),
+          model: model.trim(),
+          year: String(year).trim(),
+          color: color.trim(),
+          city: city.trim(),
+          description: description.trim(),
+          isProfileVisible: true,
+        }),
+      });
 
-      const updateText = await updateResponse.text()
+      const data = await response.json().catch(() => null);
 
-      if (!updateResponse.ok) {
-        throw new Error(updateText || "Car could not be updated")
+      if (!response.ok) {
+        throw new Error(getErrorMessage(data, "Maşın yenilənmədi"));
       }
 
-      let uploadedImageIds = []
+      await uploadNewMedia();
 
-      if (images.length > 0) {
-        for (const image of images) {
-          const imageFormData = new FormData()
-          imageFormData.append("file", image)
-
-          const imageResponse = await apiFetch(`/api/Cars/${id}/images`, {
-            method: "POST",
-            body: imageFormData,
-          })
-
-          const imageContentType = imageResponse.headers.get("content-type") || ""
-
-          if (!imageResponse.ok) {
-            const imageText = await imageResponse.text()
-            throw new Error(imageText || "Image could not be added")
-          }
-
-          if (imageContentType.includes("application/json")) {
-            const uploadedImage = await imageResponse.json()
-            uploadedImageIds.push(uploadedImage?.id || uploadedImage?.Id)
-          } else {
-            uploadedImageIds.push(null)
-          }
-        }
-
-        const selectedMainImageId = uploadedImageIds[mainNewImageIndex]
-
-        if (selectedMainImageId) {
-          const setMainResponse = await apiFetch(`/api/Cars/images/${selectedMainImageId}/set-main`, {
-            method: "PUT",
-            headers: {
-              Accept: "*/*",
-            },
-          })
-
-          const setMainText = await setMainResponse.text()
-
-          if (!setMainResponse.ok) {
-            throw new Error(setMainText || "Main image could not be updated")
-          }
-        }
-      }
-
-      setSuccess("Car updated successfully")
-      setImages([])
-      setMainNewImageIndex(0)
-      await fetchCar()
+      setSuccess("Maşın məlumatları uğurla yeniləndi");
+      setNewMediaFiles([]);
+      await fetchCar();
     } catch (err) {
-      console.log("Update error:", err)
-      setError(err.message || "Something went wrong")
+      setError(err.message || "Yeniləmə zamanı xəta baş verdi");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
-  const inputClassName = `w-full p-3 rounded-xl outline-none border ${
+  const inputClassName = `w-full h-[48px] px-4 rounded-xl outline-none border transition ${
     isDarkmodeEnabled
-      ? "bg-white/10 border-white/20 text-white placeholder-gray-300"
-      : "bg-black/5 border-black/10 text-black placeholder-gray-500"
-  }`
+      ? "bg-[#171717] border-white/15 text-white placeholder-gray-400 focus:border-red-500"
+      : "bg-white border-gray-200 text-black placeholder-gray-500 focus:border-red-500"
+  }`;
 
   const cardClassName = isDarkmodeEnabled
     ? "bg-[#111111] border-[#2a2a2a] text-white"
-    : "bg-[#f7f7f7] border-[#e5e5e5] text-black"
-
-  const visibleBrands = CAR_BRANDS.slice(0, visibleBrandCount)
+    : "bg-white border-gray-200 text-black";
 
   if (loading) {
     return (
       <div
         className={`min-h-screen flex items-center justify-center ${
-          isDarkmodeEnabled ? "bg-[#1a1a1a] text-white" : "bg-white text-black"
+          isDarkmodeEnabled ? "bg-[#111111] text-white" : "bg-white text-black"
         }`}
       >
         <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin mx-auto mb-4"></div>
-          <p className="font-semibold text-lg">Loading car...</p>
+          <div className="w-12 h-12 rounded-full border-4 border-red-500 border-t-transparent animate-spin mx-auto mb-4" />
+          <p className="font-semibold text-lg">Maşın məlumatları yüklənir...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className={`w-full min-h-screen ${isDarkmodeEnabled ? "bg-[#1a1a1a] text-white" : "bg-white text-black"}`}>
+    <div
+      className={`w-full min-h-screen ${
+        isDarkmodeEnabled ? "bg-[#111111] text-white" : "bg-[#f8f8f8] text-black"
+      }`}
+    >
       <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-10">
-        <div className={`rounded-[24px] sm:rounded-[28px] border p-5 sm:p-7 ${cardClassName}`}>
-          <h1 className="text-[24px] sm:text-[32px] lg:text-[40px] font-bold text-center">
-            Update Car
+        <div className={`rounded-[26px] border p-5 sm:p-7 ${cardClassName}`}>
+          <h1 className="text-[26px] sm:text-[34px] lg:text-[42px] font-black text-center">
+            Maşını yenilə
           </h1>
-          <p className={`text-center mt-3 text-sm sm:text-base ${isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}`}>
-            Change only what you want, current values are already loaded
+          <p
+            className={`text-center mt-3 text-sm sm:text-base ${
+              isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            Buradan maşının məlumatlarını, şəkillərini və videolarını idarə edə bilərsiniz.
           </p>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mt-6">
-          <div className="xl:col-span-5">
-            <div className={`rounded-[24px] sm:rounded-[28px] border p-4 sm:p-6 ${cardClassName}`}>
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold">Select Brand</h2>
-                <div className={`text-sm ${isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}`}>
-                  {brand || "No brand selected"}
-                </div>
-              </div>
+          <div className="xl:col-span-5 space-y-6">
+            <div className={`rounded-[26px] border p-4 sm:p-6 ${cardClassName}`}>
+              <h2 className="text-xl sm:text-2xl font-bold mb-4">
+                Mövcud media
+              </h2>
 
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                {visibleBrands.map((item) => {
-                  const isSelected = brand === item.brand
-
-                  return (
-                    <button
-                      key={item.brand}
-                      type="button"
-                      onClick={() => {
-                        setBrand(item.brand)
-                        setModel("")
-                      }}
-                      className={`rounded-[18px] border p-4 text-center font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                        isSelected
-                          ? "bg-yellow-400 text-black border-yellow-400"
-                          : isDarkmodeEnabled
-                          ? "bg-[#1a1a1a] border-[#2d2d2d] text-white hover:bg-[#202020]"
-                          : "bg-white border-[#dddddd] text-black hover:bg-[#fafafa]"
-                      }`}
-                    >
-                      <div className="text-base sm:text-lg">{item.brand}</div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {visibleBrandCount < CAR_BRANDS.length && (
-                <div className="flex justify-center mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setVisibleBrandCount((prev) => prev + 6)}
-                    className="group relative overflow-hidden px-6 sm:px-8 py-3 rounded-full font-semibold bg-yellow-400 text-black shadow-md hover:shadow-xl hover:bg-yellow-500 hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out"
-                  >
-                    <span className="relative z-10">Load More</span>
-                    <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/30 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className={`rounded-[24px] sm:rounded-[28px] border p-4 sm:p-6 mt-6 ${cardClassName}`}>
-              <h2 className="text-xl sm:text-2xl font-bold mb-4">Current Images</h2>
-
-              {existingImages.length === 0 ? (
+              {existingMedia.length === 0 ? (
                 <p className={isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}>
-                  No images found
+                  Media tapılmadı
                 </p>
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  {existingImages.map((image, index) => {
-                    const imageId = image.id || image.Id
-                    const isMain = image.isMain || image.IsMain
-                    const imageUrl = image.imageUrl || image.ImageUrl
+                  {existingMedia.map((media, index) => {
+                    const mediaId = media.id;
+                    const isMain = media.isMain;
+                    const mediaUrl = media.fileUrl;
+                    const mediaType = getMediaType(media);
 
                     return (
                       <div
-                        key={imageId}
-                        className={`rounded-[18px] overflow-hidden border ${
+                        key={mediaId}
+                        className={`rounded-[20px] overflow-hidden border ${
                           isDarkmodeEnabled
-                            ? "border-[#2a2a2a] bg-[#1a1a1a]"
-                            : "border-[#e5e5e5] bg-white"
+                            ? "border-white/10 bg-[#171717]"
+                            : "border-gray-200 bg-[#f7f7f7]"
                         }`}
                       >
-                        <img
-                          src={getImageUrl(imageUrl)}
-                          alt={`existing-${index}`}
-                          className="w-full h-[140px] sm:h-[180px] object-cover"
-                        />
+                        <div className="relative">
+                          {mediaType === "video" ? (
+                            <video
+                              src={getMediaUrl(mediaUrl)}
+                              className="w-full h-[150px] sm:h-[185px] object-cover"
+                              controls
+                              muted
+                            />
+                          ) : (
+                            <img
+                              src={getMediaUrl(mediaUrl)}
+                              alt={`car-${index}`}
+                              className="w-full h-[150px] sm:h-[185px] object-cover"
+                            />
+                          )}
 
-                        <div className="p-2">
-                          <div className="text-xs sm:text-sm mb-2 font-medium">
-                            {isMain ? "Main image" : `Image ${index + 1}`}
-                          </div>
+                          {isMain && mediaType === "image" && (
+                            <span className="absolute top-2 left-2 bg-green-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">
+                              Əsas
+                            </span>
+                          )}
 
-                          <div className="flex flex-col gap-2">
+                          {mediaType === "video" && (
+                            <span className="absolute top-2 left-2 bg-purple-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">
+                              Video
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="p-3 space-y-2">
+                          <p className="text-sm font-semibold">
+                            {mediaType === "video"
+                              ? `Video ${index + 1}`
+                              : isMain
+                              ? "Əsas şəkil"
+                              : `Şəkil ${index + 1}`}
+                          </p>
+
+                          {mediaType === "image" && (
                             <button
                               type="button"
-                              onClick={() => handleSetMainImage(imageId)}
-                              disabled={isMain || settingMainImageId === imageId}
-                              className={`w-full py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
+                              onClick={() => handleSetMainMedia(mediaId)}
+                              disabled={isMain || settingMainMediaId === mediaId}
+                              className={`w-full py-2 rounded-xl text-sm font-bold transition ${
                                 isMain
                                   ? "bg-green-500 text-white cursor-default"
-                                  : "bg-blue-500 text-white hover:opacity-90 disabled:opacity-50"
+                                  : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-60"
                               }`}
                             >
                               {isMain
-                                ? "Main Image"
-                                : settingMainImageId === imageId
-                                ? "Processing..."
-                                : "Set Main"}
+                                ? "Əsas şəkildir"
+                                : settingMainMediaId === mediaId
+                                ? "Yenilənir..."
+                                : "Əsas et"}
                             </button>
+                          )}
 
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteImage(imageId)}
-                              disabled={deletingImageId === imageId}
-                              className="w-full py-2 rounded-xl text-xs sm:text-sm font-semibold bg-red-500 text-white hover:opacity-90 disabled:opacity-50 transition"
-                            >
-                              {deletingImageId === imageId ? "Deleting..." : "Delete"}
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMedia(mediaId)}
+                            disabled={deletingMediaId === mediaId}
+                            className="w-full py-2 rounded-xl text-sm font-bold bg-red-500 text-white hover:bg-red-600 disabled:opacity-60 transition"
+                          >
+                            {deletingMediaId === mediaId ? "Silinir..." : "Sil"}
+                          </button>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               )}
             </div>
 
-            <div className={`rounded-[24px] sm:rounded-[28px] border p-4 sm:p-6 mt-6 ${cardClassName}`}>
+            <div className={`rounded-[26px] border p-4 sm:p-6 ${cardClassName}`}>
               <div className="flex items-center justify-between gap-3 mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold">Add New Images</h2>
-                <div className={`text-sm ${isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}`}>
-                  {images.length} image selected
-                </div>
+                <h2 className="text-xl sm:text-2xl font-bold">
+                  Yeni media əlavə et
+                </h2>
+
+                <span
+                  className={`text-sm ${
+                    isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  {newMediaFiles.length} fayl seçilib
+                </span>
               </div>
 
               <input
                 type="file"
                 multiple
-                accept="image/*"
-                onChange={handleImageChange}
+                accept="image/*,video/*"
+                onChange={handleMediaChange}
                 className={inputClassName}
               />
 
-              {imagePreviewUrls.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
-                  {imagePreviewUrls.map((item, index) => {
-                    const isMain = index === mainNewImageIndex
+              <p
+                className={`mt-2 text-xs ${
+                  isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                Şəkil və video əlavə edə bilərsiniz. Əsas media yalnız şəkil ola bilər.
+              </p>
 
-                    return (
-                      <div
-                        key={`${item.file.name}-${index}-${item.file.lastModified}`}
-                        className={`rounded-[18px] overflow-hidden border ${
-                          isDarkmodeEnabled
-                            ? "border-[#2a2a2a] bg-[#1a1a1a]"
-                            : "border-[#e5e5e5] bg-white"
-                        }`}
-                      >
+              {mediaPreviewUrls.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
+                  {mediaPreviewUrls.map((item, index) => (
+                    <div
+                      key={`${item.file.name}-${index}`}
+                      className={`rounded-[20px] overflow-hidden border ${
+                        isDarkmodeEnabled
+                          ? "border-white/10 bg-[#171717]"
+                          : "border-gray-200 bg-[#f7f7f7]"
+                      }`}
+                    >
+                      {item.type === "video" ? (
+                        <video
+                          src={item.url}
+                          className="w-full h-[150px] sm:h-[185px] object-cover"
+                          controls
+                          muted
+                        />
+                      ) : (
                         <img
                           src={item.url}
-                          alt={`preview-${index}`}
-                          className="w-full h-[140px] sm:h-[180px] object-cover"
+                          alt={item.file.name}
+                          className="w-full h-[150px] sm:h-[185px] object-cover"
                         />
+                      )}
 
-                        <div className="p-3">
-                          <div className="px-0 py-0 text-xs sm:text-sm truncate mb-2">
-                            {item.file.name}
-                          </div>
+                      <div className="p-3">
+                        <p className="text-xs truncate mb-2">{item.file.name}</p>
 
-                          <div className="text-xs sm:text-sm font-medium mb-3">
-                            {isMain ? "Main image" : `New image ${index + 1}`}
-                          </div>
-
-                          <div className="flex flex-col gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleSetSelectedMainImage(index)}
-                              disabled={isMain}
-                              className={`w-full py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
-                                isMain
-                                  ? "bg-green-500 text-white cursor-default"
-                                  : "bg-blue-500 text-white hover:opacity-90"
-                              }`}
-                            >
-                              {isMain ? "Main Image" : "Set Main"}
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSelectedImage(index)}
-                              className="w-full py-2 rounded-xl text-xs sm:text-sm font-semibold bg-red-500 text-white hover:opacity-90 transition"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveNewMedia(index)}
+                          className="w-full py-2 rounded-xl text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition"
+                        >
+                          Sil
+                        </button>
                       </div>
-                    )
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           </div>
 
           <div className="xl:col-span-7">
-            <div className={`rounded-[24px] sm:rounded-[28px] border p-4 sm:p-6 ${cardClassName}`}>
-              <h2 className="text-xl sm:text-2xl font-bold mb-6">Car Details</h2>
+            <div className={`rounded-[26px] border p-4 sm:p-6 ${cardClassName}`}>
+              <h2 className="text-xl sm:text-2xl font-bold mb-6">
+                Maşın məlumatları
+              </h2>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Brand</label>
-                    <input
-                      type="text"
-                      value={brand}
-                      readOnly
-                      placeholder="Select a brand from the left"
-                      className={inputClassName}
-                    />
-                  </div>
+                  <SmartSelect
+                    label="Marka"
+                    value={brand}
+                    onChange={(value) => {
+                      setBrand(value);
+                      setModel("");
+                    }}
+                    options={brandOptions}
+                    placeholder="Marka seçin və ya yazın"
+                    isDarkmodeEnabled={isDarkmodeEnabled}
+                  />
 
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Model</label>
-                    <select
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                      className={inputClassName}
-                      disabled={!brand}
-                    >
-                      <option value="">
-                        {brand ? "Select model" : "Select brand first"}
-                      </option>
-                      {availableModels.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SmartSelect
+                    label="Model"
+                    value={model}
+                    onChange={setModel}
+                    options={modelOptions}
+                    placeholder={
+                      brand ? "Model seçin və ya yazın" : "Əvvəl marka seçin"
+                    }
+                    disabled={!brand}
+                    isDarkmodeEnabled={isDarkmodeEnabled}
+                  />
 
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Year</label>
-                    <select
-                      value={year}
-                      onChange={(e) => setYear(e.target.value)}
-                      className={inputClassName}
-                    >
-                      <option value="">Select year</option>
-                      {YEAR_OPTIONS.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SmartSelect
+                    label="İl"
+                    value={year}
+                    onChange={setYear}
+                    options={YEAR_OPTIONS.map(String)}
+                    placeholder="İl seçin və ya yazın"
+                    isDarkmodeEnabled={isDarkmodeEnabled}
+                  />
 
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Fuel Type</label>
-                    <select
-                      value={fuelType}
-                      onChange={(e) => setFuelType(e.target.value)}
-                      className={inputClassName}
-                    >
-                      <option value="">Select fuel type</option>
-                      {FUEL_OPTIONS.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SmartSelect
+                    label="Rəng"
+                    value={color}
+                    onChange={setColor}
+                    options={COLOR_OPTIONS}
+                    placeholder="Rəng seçin və ya yazın"
+                    isDarkmodeEnabled={isDarkmodeEnabled}
+                  />
 
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Transmission</label>
-                    <select
-                      value={transmission}
-                      onChange={(e) => setTransmission(e.target.value)}
-                      className={inputClassName}
-                    >
-                      <option value="">Select transmission</option>
-                      {TRANSMISSION_OPTIONS.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Color</label>
-                    <select
-                      value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      className={inputClassName}
-                    >
-                      <option value="">Select color</option>
-                      {COLOR_OPTIONS.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Region</label>
-                    <select
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className={inputClassName}
-                    >
-                      <option value="">Select region</option>
-                      {REGION_OPTIONS.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Body Type</label>
-                    <select
-                      value={bodyType}
-                      onChange={(e) => setBodyType(e.target.value)}
-                      className={inputClassName}
-                    >
-                      <option value="">Select body type</option>
-                      {BODY_TYPE_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>
-                          {item.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Price Per Day</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={pricePerDay}
-                      onChange={(e) => setPricePerDay(e.target.value)}
-                      placeholder="Enter daily price"
-                      className={inputClassName}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm sm:text-base">Mileage</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={mileage}
-                      onChange={(e) => setMileage(e.target.value)}
-                      placeholder="Enter mileage"
-                      className={inputClassName}
-                    />
-                  </div>
+                  <SmartSelect
+                    label="Şəhər"
+                    value={city}
+                    onChange={setCity}
+                    options={REGION_OPTIONS}
+                    placeholder="Şəhər seçin və ya yazın"
+                    isDarkmodeEnabled={isDarkmodeEnabled}
+                  />
                 </div>
 
                 <div>
-                  <label className="block mb-2 text-sm sm:text-base">Description</label>
+                  <label className="block mb-2 text-sm sm:text-base font-medium">
+                    Açıqlama
+                  </label>
+
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    rows={5}
-                    placeholder="Write car details"
-                    className={`${inputClassName} resize-none`}
+                    rows={6}
+                    placeholder="Maşın haqqında məlumat yazın"
+                    className={`${inputClassName} h-auto py-3 resize-none`}
                   />
                 </div>
 
                 {error && (
-                  <div
-                    className={`rounded-xl px-4 py-3 text-sm ${
-                      isDarkmodeEnabled
-                        ? "bg-red-500/10 text-red-300 border border-red-500/20"
-                        : "bg-red-50 text-red-600 border border-red-200"
-                    }`}
-                  >
+                  <div className="rounded-xl px-4 py-3 text-sm bg-red-500/10 text-red-400 border border-red-500/20">
                     {error}
                   </div>
                 )}
 
                 {success && (
-                  <div
-                    className={`rounded-xl px-4 py-3 text-sm ${
-                      isDarkmodeEnabled
-                        ? "bg-green-500/10 text-green-300 border border-green-500/20"
-                        : "bg-green-50 text-green-600 border border-green-200"
-                    }`}
-                  >
+                  <div className="rounded-xl px-4 py-3 text-sm bg-green-500/10 text-green-400 border border-green-500/20">
                     {success}
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="group relative overflow-hidden w-full bg-yellow-400 text-black py-3 rounded-xl hover:bg-yellow-500 duration-200 disabled:opacity-50 font-semibold flex items-center justify-center shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out"
+                    className="group relative overflow-hidden w-full bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 disabled:opacity-60 font-bold shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
-                    <span className="relative z-10">
-                      {submitting ? "Processing..." : "Update Car"}
-                    </span>
-                    <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/30 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
+                    {submitting ? "Yenilənir..." : "Maşını yenilə"}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => navigate("/my-cars")}
-                    className={`w-full py-3 rounded-xl font-semibold transition ${
+                    className={`w-full py-3 rounded-xl font-bold transition ${
                       isDarkmodeEnabled
                         ? "bg-white/10 text-white hover:bg-white/20"
                         : "bg-black text-white hover:opacity-90"
                     }`}
                   >
-                    Back to My Cars
+                    Geri qayıt
                   </button>
                 </div>
               </form>
@@ -788,7 +623,7 @@ const UpdateCar = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default UpdateCar
+export default UpdateCar;
