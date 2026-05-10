@@ -1,71 +1,77 @@
-import { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import { useDarkmode } from "../stores/useDarkmode"
-import { setAccessToken, setRefreshToken } from "../utils/auth"
-import { apiFetch } from "../utils/apiFetch"
-import LexusBg from "../assets/lexus-bg.png"
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useDarkmode } from "../stores/useDarkmode";
+import { setAccessToken, setRefreshToken } from "../utils/auth";
+import { apiFetch } from "../utils/apiFetch";
+import LexusBg from "../assets/lexus-bg.png";
 
 const Login = () => {
-    const { isDarkmodeEnabled } = useDarkmode()
-    const navigate = useNavigate()
+  const { isDarkmodeEnabled } = useDarkmode();
+  const navigate = useNavigate();
 
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-   const handleLogin = async (e) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    setError("");
+    setLoading(true);
 
     try {
-        const response = await apiFetch("/api/Auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                email,
-                password,
-            }),
-        })
+      const response = await apiFetch("/api/Auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-        const data = await response.json().catch(() => null)
+      const data = await response.json().catch(() => null);
 
-        if (!response.ok) {
-            throw new Error(
-                data?.message ||
-                data?.Message ||
-                "Email ve ya sifre sehvdir"
-            )
-        }
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            data?.Message ||
+            "Email və ya şifrə səhvdir"
+        );
+      }
 
-        const accessToken = data?.accessToken || data?.token
-        const refreshToken = data?.refreshToken
+      const accessToken =
+        data?.accessToken ||
+        data?.token;
 
-        if (!accessToken) {
-            throw new Error("Access token gelmedi")
-        }
+      const refreshToken =
+        data?.refreshToken;
 
-        setAccessToken(accessToken)
+      if (!accessToken) {
+        throw new Error("Access token gəlmədi");
+      }
 
-        if (refreshToken) {
-            setRefreshToken(refreshToken)
-        }
+      setAccessToken(accessToken);
 
-        navigate("/")
-        window.location.reload()
+      if (refreshToken) {
+        setRefreshToken(refreshToken);
+      }
+
+      navigate("/");
+      window.location.reload();
     } catch (err) {
-        console.log("Login error:", err)
-        setError(err.message || "Login zamani xeta bas verdi")
-    } finally {
-        setLoading(false)
-    }
-}
+      console.log("Login error:", err);
 
-    return (
-  <div
+      setError(
+        err.message ||
+          "Login zamanı xəta baş verdi"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
       className="min-h-[calc(100vh-160px)] bg-cover bg-center bg-no-repeat flex items-center justify-center px-3 sm:px-4 md:px-6 py-8 sm:py-10 md:py-14 relative"
       style={{ backgroundImage: `url(${LexusBg})` }}
     >
@@ -82,16 +88,22 @@ const Login = () => {
           Sign In
         </h1>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <form
+          onSubmit={handleLogin}
+          className="flex flex-col gap-4"
+        >
           <div>
             <label className="block mb-2 text-white text-sm sm:text-base">
               Email
             </label>
+
             <input
               type="email"
               placeholder="Email daxil et"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
               className="w-full p-2.5 sm:p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400 text-sm sm:text-base"
             />
           </div>
@@ -100,17 +112,22 @@ const Login = () => {
             <label className="block mb-2 text-white text-sm sm:text-base">
               Password
             </label>
+
             <input
               type="password"
-              placeholder="Sifre daxil et"
+              placeholder="Şifrə daxil et"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
               className="w-full p-2.5 sm:p-3 rounded-xl outline-none border bg-white/10 border-white/20 text-white placeholder-gray-300 backdrop-blur-sm focus:border-yellow-400 text-sm sm:text-base"
             />
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-red-400 text-sm">
+              {error}
+            </p>
           )}
 
           <button
@@ -133,6 +150,7 @@ const Login = () => {
                 "Sign In"
               )}
             </span>
+
             {!loading && (
               <span className="absolute inset-0 -translate-x-full skew-x-12 bg-white/30 transition-transform duration-500 group-hover:translate-x-[150%]"></span>
             )}
@@ -140,14 +158,17 @@ const Login = () => {
         </form>
 
         <p className="text-center mt-4 sm:mt-5 text-white text-sm sm:text-base">
-          don't you have an account?{" "}
-          <Link to="/register" className="text-yellow-400 hover:underline">
+          Don't you have an account?{" "}
+          <Link
+            to="/register"
+            className="text-yellow-400 hover:underline"
+          >
             Register
           </Link>
         </p>
       </div>
     </div>
-    )
-}
+  );
+};
 
-export default Login
+export default Login;

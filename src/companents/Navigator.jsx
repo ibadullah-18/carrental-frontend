@@ -6,15 +6,12 @@ import Loginpage from "../pages/Loginpage"
 import Rentalpage from "../pages/Rentalpage"
 import Detailspage from "../pages/Detalispage"
 import Registerpage from "../pages/Registerpage"
-import Favoritepage from "../pages/Favoritepage"
-import Basketpage from "../pages/Basketpage"
 import AddCarpage from "../pages/AddCarpage"
 import Profilepage from "../pages/Profilepage"
 import Mycarspage from "../pages/Maycarspage"
 import UpdateCarpage from "../pages/UpdateCarpage"
 import OwnerCarpage from "../pages/OwnerCarpage"
 import Searchpage from "../pages/Searchpage"
-import MyCarRentalspage from "../pages/MyCarRentalspage"
 import PageTransition from "../companents/PageTransition"
 
 const Navigator = () => {
@@ -73,24 +70,6 @@ const Navigator = () => {
       />
 
       <Route
-        path="/favorite"
-        element={
-          <PageTransition direction="left">
-            <Favoritepage />
-          </PageTransition>
-        }
-      />
-
-      <Route
-        path="/basket"
-        element={
-          <PageTransition direction="left">
-            <Basketpage />
-          </PageTransition>
-        }
-      />
-
-      <Route
         path="/add-car"
         element={
           <PageTransition direction="top">
@@ -140,15 +119,6 @@ const Navigator = () => {
         element={
           <PageTransition direction="top">
             <Searchpage />
-          </PageTransition>
-        }
-      />
-
-      <Route
-        path="/my-car-rentals"
-        element={
-          <PageTransition direction="left">
-            <MyCarRentalspage />
           </PageTransition>
         }
       />

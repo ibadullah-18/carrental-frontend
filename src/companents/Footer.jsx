@@ -1,95 +1,148 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../assets/Logo.png";
 import { useDarkmode } from "../stores/useDarkmode";
-import { FaTiktok, FaInstagram, FaTwitter, FaFacebookF } from "react-icons/fa";
+import { FaTiktok, FaInstagram } from "react-icons/fa";
 
 const Footer = () => {
   const { isDarkmodeEnabled } = useDarkmode();
   const navigate = useNavigate();
+  const [showContact, setShowContact] = useState(false);
 
-  const socialLink =
-    "https://l.instagram.com/?u=https%3A%2F%2Fwww.tiktok.com%2F%40ibadulla.huseynzade%3F_t%3D8kkTNmMYHTe%26_r%3D1%26fbclid%3DPAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQMMjU2MjgxMDQwNTU4AAGnIMsV9MmWjeVqpnyclnm9tUIAQcTAWZtaLkhekJ8dCiZA7IuhJXouHgTB3g8_aem_I1o3zDBSx-8Hc8OrsFA4Rw&e=AT5LO-b61ynC8jzj1YdlrbQxhUNpJXMn0vbC_Z-fKBQ4c7FLKFMl5LtALD3HVg5CYRrtslyQ4CDb5RHreK4t69Mv5QMZh3VtvO1d-KjeIg";
+  const instagramLink =
+    "https://www.instagram.com/ibadulla.huseynzade";
+  const tiktokLink =
+    "https://www.tiktok.com/@ibadulla.huseynzade?_r=1&_t=ZS-96DQuZdjV3t";
+
+  const textColor = isDarkmodeEnabled ? "text-gray-300" : "text-gray-600";
+
+  const goHome = () => {
+    navigate("/");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const scrollToSection = (id) => {
+    const section = document.getElementById(id);
+
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        const target = document.getElementById(id);
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    }
+  };
 
   return (
-    <div
+    <footer
       className={`w-full py-10 ${
         isDarkmodeEnabled ? "bg-[#222222] text-white" : "bg-gray-100 text-black"
       }`}
     >
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between gap-10">
-          <div className="max-w-[400px]">
-            <h1 className="font-bold text-[20px]">About</h1>
-            <p
-              className={`mt-2 leading-7 ${
-                isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-              }`}
-            >
-              We provide reliable and affordable car rental services with a wide
-              range of vehicles. Our goal is to deliver a smooth and
-              user-friendly experience, ensuring customer satisfaction every
-              time.
+          <div className="max-w-[460px]">
+            <h2 className="font-bold text-[20px]">Haqqımızda</h2>
+
+            <p className={`mt-3 leading-7 ${textColor}`}>
+              MyCar istifadəçilərin öz maşınlarını platformada rahat şəkildə
+              göstərməsi üçün yaradılmış müasir onlayn xidmətdir. Saytda
+              istifadəçilər maşın məlumatlarını əlavə edə, uyğun paket seçə və
+              elanlarını digər istifadəçilərə görünən edə bilərlər.
             </p>
 
-            <div className="flex mt-4">
-              <h1 className="font-bold">Email:</h1>
-              <p
-                className={`pl-1 ${
-                  isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                RentCAR@rentcar.com
-              </p>
-            </div>
-
-            <div className="flex mt-2">
-              <h1 className="font-bold">Phone:</h1>
-              <p
-                className={`pl-1 ${
-                  isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                +123 456 7890
-              </p>
-            </div>
+            <p className={`mt-3 leading-7 ${textColor}`}>
+              Məqsədimiz maşınların daha rahat təqdim olunmasını, istifadəçilərin
+              isə istədikləri avtomobillərə daha sürətli baxmasını təmin etməkdir.
+            </p>
           </div>
 
-          <div className="flex gap-16">
+          <div className="flex flex-col sm:flex-row gap-10 sm:gap-16">
             <div>
-              <h1 className="font-bold text-[20px]">Quick Links</h1>
-              <ul
-                className={`mt-2 ${
-                  isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                <li className="mt-3 cursor-pointer hover:text-red-500 transition">
-                  About Us
+              <h2 className="font-bold text-[20px]">Keçidlər</h2>
+
+              <ul className={`mt-3 ${textColor}`}>
+                <li
+                  onClick={() => scrollToSection("about")}
+                  className="mt-3 cursor-pointer hover:text-red-500 transition"
+                >
+                  Haqqımızda
                 </li>
-                <li className="mt-1 cursor-pointer hover:text-red-500 transition">
-                  Services
+
+                <li
+                  onClick={() => scrollToSection("services")}
+                  className="mt-2 cursor-pointer hover:text-red-500 transition"
+                >
+                  Xidmətlər
                 </li>
-                <li className="mt-1 cursor-pointer hover:text-red-500 transition">
-                  Contact
+
+                <li
+                  onClick={goHome}
+                  className="mt-2 cursor-pointer hover:text-red-500 transition"
+                >
+                  Əsas səhifə
                 </li>
-                <li className="mt-1 cursor-pointer hover:text-red-500 transition">
-                  Home
+
+                <li
+                  onClick={() => setShowContact((prev) => !prev)}
+                  className="mt-2 cursor-pointer hover:text-red-500 transition"
+                >
+                  Əlaqə
                 </li>
               </ul>
             </div>
 
-            <div>
-              <h1 className="font-bold text-[20px]">Category</h1>
-              <ul
-                className={`mt-2 ${
-                  isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                <li className="mt-3">SUV</li>
-                <li className="mt-1">Sedan</li>
-                <li className="mt-1">Sport</li>
-                <li className="mt-1">Luxury</li>
-              </ul>
-            </div>
+            {showContact && (
+              <div>
+                <h2 className="font-bold text-[20px]">Əlaqə məlumatları</h2>
+
+                <div className={`mt-3 space-y-2 ${textColor}`}>
+                  <p>
+                    <span className="font-semibold text-current">Email:</span>{" "}
+                    <a
+                      href="mailto:wallaxbaku@gmail.com"
+                      className="hover:text-red-500 transition break-all"
+                    >
+                      wallaxbaku@gmail.com
+                    </a>
+                  </p>
+
+                  <p>
+                    <span className="font-semibold text-current">
+                      Yaradıcı:
+                    </span>{" "}
+                    <a
+                      href="mailto:huseynzadeibadullah@gmail.com"
+                      className="hover:text-red-500 transition break-all"
+                    >
+                      huseynzadeibadullah@gmail.com
+                    </a>
+                  </p>
+
+                  <p>
+                    <span className="font-semibold text-current">Nömrə:</span>{" "}
+                    <a
+                      href="tel:+994506151345"
+                      className="hover:text-red-500 transition"
+                    >
+                      +994 (50) 615 13 45
+                    </a>
+                  </p>
+
+                  <p>
+                    <span className="font-semibold text-current">Nömrə:</span>{" "}
+                    <a
+                      href="tel:+994556151345"
+                      className="hover:text-red-500 transition"
+                    >
+                      +994 (55) 615 13 45
+                    </a>
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -100,38 +153,29 @@ const Footer = () => {
         >
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div
-              onClick={() => navigate("/")}
-              className="flex items-center cursor-pointer"
+              onClick={goHome}
+              className="flex items-center cursor-pointer select-none"
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden shadow-md mr-3">
+              <div className="w-10 h-10 rounded-full overflow-hidden shadow-md mr-3 bg-white">
                 <img
                   src={Logo}
-                  alt="Logo"
+                  alt="MyCar loqosu"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h1 className="text-2xl font-semibold">Zyro</h1>
-              <h1 className="text-2xl text-red-500 ml-1">CAR</h1>
+
+              <h1 className="text-2xl font-semibold">My</h1>
+              <h1 className="text-2xl text-red-500 ml-1 font-semibold">
+                Car
+              </h1>
             </div>
 
             <div className="flex items-center gap-3">
               <a
-                href={socialLink}
+                href={instagramLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition duration-300 hover:scale-110 ${
-                  isDarkmodeEnabled
-                    ? "bg-[#2f2f2f] text-gray-200 hover:bg-red-500 hover:text-white"
-                    : "bg-white text-gray-700 shadow-sm hover:bg-red-500 hover:text-white"
-                }`}
-              >
-                <FaTiktok size={15} />
-              </a>
-
-              <a
-                href={socialLink}
-                target="_blank"
-                rel="noopener noreferrer"
+                aria-label="Instagram"
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition duration-300 hover:scale-110 ${
                   isDarkmodeEnabled
                     ? "bg-[#2f2f2f] text-gray-200 hover:bg-red-500 hover:text-white"
@@ -142,35 +186,27 @@ const Footer = () => {
               </a>
 
               <a
-                href={socialLink}
+                href={tiktokLink}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="TikTok"
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition duration-300 hover:scale-110 ${
                   isDarkmodeEnabled
                     ? "bg-[#2f2f2f] text-gray-200 hover:bg-red-500 hover:text-white"
                     : "bg-white text-gray-700 shadow-sm hover:bg-red-500 hover:text-white"
                 }`}
               >
-                <FaTwitter size={15} />
-              </a>
-
-              <a
-                href={socialLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition duration-300 hover:scale-110 ${
-                  isDarkmodeEnabled
-                    ? "bg-[#2f2f2f] text-gray-200 hover:bg-red-500 hover:text-white"
-                    : "bg-white text-gray-700 shadow-sm hover:bg-red-500 hover:text-white"
-                }`}
-              >
-                <FaFacebookF size={15} />
+                <FaTiktok size={15} />
               </a>
             </div>
           </div>
+
+          <p className={`text-center mt-5 text-sm ${textColor}`}>
+            © {new Date().getFullYear()} MyCar. Bütün hüquqlar qorunur.
+          </p>
         </div>
       </div>
-    </div>
+    </footer>
   );
 };
 

@@ -6,15 +6,14 @@ import {
   clearTokens,
 } from "./auth";
 
-const BASE_URL = "http://localhost:5248";
+const BASE_URL = "https://localhost:52247";
+
+let isRefreshing = false;
+let refreshPromise = null;
 
 async function refreshAccessToken() {
   const accessToken = getAccessToken();
   const refreshToken = getRefreshToken();
-
-  console.log("Refresh başlayır...");
-  console.log("Köhnə access token:", accessToken);
-  console.log("Refresh token:", refreshToken);
 
   if (!refreshToken) {
     clearTokens();
@@ -33,11 +32,15 @@ async function refreshAccessToken() {
   });
 
   const data = await response.json().catch(() => null);
-  console.log("Refresh response:", data);
 
   if (!response.ok) {
     clearTokens();
-    throw new Error(data?.message || "Refresh token yenilənmədi");
+
+    throw new Error(
+      data?.message ||
+      data?.Message ||
+      "Refresh token yenilənmədi"
+    );
   }
 
   const newAccessToken = data?.accessToken || data?.token;
@@ -54,12 +57,14 @@ async function refreshAccessToken() {
     setRefreshToken(newRefreshToken);
   }
 
-  console.log("Yeni access token save olundu");
   return newAccessToken;
 }
 
-function buildHeaders(optionsHeaders = {}, hasBody = false, isFormData = false) {
-  const headers = { ...optionsHeaders };
+function buildHeaders(customHeaders = {}, hasBody = false, isFormData = false) {
+  const headers = {
+    ...customHeaders,
+  };
+
   const accessToken = getAccessToken();
 
   if (!isFormData && hasBody && !headers["Content-Type"]) {
@@ -77,7 +82,11 @@ export async function apiFetch(url, options = {}, retry = true) {
   const isFormData = options.body instanceof FormData;
   const hasBody = !!options.body;
 
-  let headers = buildHeaders(options.headers, hasBody, isFormData);
+  let headers = buildHeaders(
+    options.headers,
+    hasBody,
+    isFormData
+  );
 
   let response = await fetch(`${BASE_URL}${url}`, {
     ...options,
@@ -85,13 +94,23 @@ export async function apiFetch(url, options = {}, retry = true) {
   });
 
   if (response.status === 401 && retry) {
-    console.log("401 gəldi:", url);
-
     try {
-      const newAccessToken = await refreshAccessToken();
+      if (!isRefreshing) {
+        isRefreshing = true;
+
+        refreshPromise = refreshAccessToken().finally(() => {
+          isRefreshing = false;
+        });
+      }
+
+      const newAccessToken = await refreshPromise;
 
       headers = {
-        ...buildHeaders(options.headers, hasBody, isFormData),
+        ...buildHeaders(
+          options.headers,
+          hasBody,
+          isFormData
+        ),
         Authorization: `Bearer ${newAccessToken}`,
       };
 
@@ -99,10 +118,7 @@ export async function apiFetch(url, options = {}, retry = true) {
         ...options,
         headers,
       });
-
-      console.log("Request yenidən göndərildi:", url);
     } catch (error) {
-      console.log("Refresh xətası:", error);
       clearTokens();
       window.location.href = "/login";
       throw error;

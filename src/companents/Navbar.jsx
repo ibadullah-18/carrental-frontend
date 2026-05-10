@@ -43,26 +43,29 @@ const Navbar = () => {
     }
   }
 
-  const fetchUserProfile = async (currentToken) => {
-    try {
-      const userId = getUserIdFromToken(currentToken)
-      if (!userId) return
+const fetchUserProfile = async (currentToken) => {
+  try {
+    const userId = getUserIdFromToken(currentToken)
+    if (!userId) return
 
-      const response = await apiFetch(`/api/Users/${userId}`, {
+    const response = await apiFetch(
+      `/api/Users/${userId}/public-profile`,
+      {
         method: "GET",
         headers: {
           Accept: "*/*",
         },
-      })
+      }
+    )
 
-      if (!response.ok) return
+    if (!response.ok) return
 
-      const data = await response.json()
-      setProfileImageUrl(data?.profileImageUrl || "")
-    } catch (error) {
-      console.log("User profile fetch error:", error)
-    }
+    const data = await response.json()
+    setProfileImageUrl(data?.profileImageUrl || "")
+  } catch (error) {
+    console.log("User profile fetch error:", error)
   }
+}
 
   useEffect(() => {
     const currentToken = getAccessToken()
@@ -215,11 +218,11 @@ const Navbar = () => {
               </div>
 
               <div className="flex items-center text-xl font-semibold">
-                <span>Zyro</span>
+                <span>My</span>
                 <span className="text-red-500 ml-1">CAR</span>
               </div>
             </Link>
-          </div>
+          </div>  
 
           <div className="hidden lg:flex flex-1 items-center justify-center relative">
             <div
@@ -234,23 +237,23 @@ const Navbar = () => {
                 onClick={clearSearchAndCloseMenu}
                 className={navLinkClass}
               >
-                Home
+                Ana səhifə
               </Link>
 
               <Link
-                to={token ? "/favorite" : "/login"}
+                to={token ? "/my-cars" : "/login"}
                 onClick={clearSearchAndCloseMenu}
                 className={navLinkClass}
               >
-                Favorite
+                Mənim maşınlarım
               </Link>
 
               <Link
-                to={token ? "/basket" : "/login"}
+                to={token ? "/add-car" : "/login"}
                 onClick={clearSearchAndCloseMenu}
-                className={navLinkClass}
+                 className="relative overflow-hidden inline-block px-4 py-2 rounded bg-yellow-400 text-black font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-white/30 before:skew-x-12 before:transition-all before:duration-500 hover:before:left-[120%]"
               >
-                Basket
+                Maşın əlavə et
               </Link>
             </div>
 
@@ -313,7 +316,7 @@ const Navbar = () => {
                           : "hover:bg-gray-100 text-gray-600"
                       }`}
                     >
-                      Clear
+                      Təmizlə
                     </button>
                   )}
 
@@ -321,7 +324,7 @@ const Navbar = () => {
                     type="submit"
                     className="px-4 py-2 rounded-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition"
                   >
-                    Enter
+                    Axtar
                   </button>
                 </div>
               </div>
@@ -381,7 +384,7 @@ const Navbar = () => {
                   >
                     {profileImageUrl ? (
                       <img
-                        src={`http://localhost:5248${profileImageUrl}`}
+                        src={`https://localhost:52247${profileImageUrl}`}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />
@@ -414,35 +417,6 @@ const Navbar = () => {
                         : "bg-white border-gray-200"
                     }`}
                   >
-                    <Link
-                      to="/add-car"
-                      onClick={clearSearchAndCloseMenu}
-                      className={`block px-4 py-3 transition ${
-                        isDarkmodeEnabled ? "hover:bg-[#2f2f2f]" : "hover:bg-gray-100"
-                      }`}
-                    >
-                      Add car
-                    </Link>
-
-                    <Link
-                      to="/my-cars"
-                      onClick={clearSearchAndCloseMenu}
-                      className={`block px-4 py-3 transition ${
-                        isDarkmodeEnabled ? "hover:bg-[#2f2f2f]" : "hover:bg-gray-100"
-                      }`}
-                    >
-                      My cars
-                    </Link>
-
-                    <Link
-                      to="/my-car-rentals"
-                      onClick={clearSearchAndCloseMenu}
-                      className={`block px-4 py-3 transition ${
-                        isDarkmodeEnabled ? "hover:bg-[#2f2f2f]" : "hover:bg-gray-100"
-                      }`}
-                    >
-                      My Rentals
-                    </Link>
 
                     <Link
                       to="/profile"
@@ -451,14 +425,14 @@ const Navbar = () => {
                         isDarkmodeEnabled ? "hover:bg-[#2f2f2f]" : "hover:bg-gray-100"
                       }`}
                     >
-                      Profile
+                      Profil
                     </Link>
 
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-3 bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition"
                     >
-                      Log out
+                      Çıxış
                     </button>
                   </div>
                 </>
@@ -468,7 +442,7 @@ const Navbar = () => {
                   onClick={clearSearchAndCloseMenu}
                   className="relative overflow-hidden inline-block px-4 py-2 rounded bg-yellow-400 text-black font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-white/30 before:skew-x-12 before:transition-all before:duration-500 hover:before:left-[120%]"
                 >
-                  <span className="relative z-10">Sign In</span>
+                  <span className="relative z-10">Giriş et</span>
                 </Link>
               )}
             </div>
@@ -521,7 +495,7 @@ const Navbar = () => {
                   >
                     {profileImageUrl ? (
                       <img
-                        src={`http://localhost:5248${profileImageUrl}`}
+                        src={`https://localhost:52247${profileImageUrl}`}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />
@@ -548,7 +522,7 @@ const Navbar = () => {
                     onClick={clearSearchAndCloseMenu}
                     className="relative overflow-hidden inline-block px-4 py-2 rounded bg-yellow-400 text-black font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-white/30 before:skew-x-12 before:transition-all before:duration-500 hover:before:left-[120%]"
                   >
-                    <span className="relative z-10">Sign In</span>
+                    <span className="relative z-10">Giriş et</span>
                   </Link>
                 )}
               </>
@@ -601,7 +575,7 @@ const Navbar = () => {
               type="submit"
               className="px-4 h-[44px] rounded-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition"
             >
-              Enter
+              Axtar
             </button>
 
             <button
@@ -613,7 +587,7 @@ const Navbar = () => {
                   : "bg-gray-200 text-black hover:bg-gray-300"
               }`}
             >
-              Close
+              Bağla
             </button>
           </form>
         </div>
@@ -628,52 +602,37 @@ const Navbar = () => {
       >
         <div className="px-4 py-4 flex flex-col gap-4">
           <Link to="/" onClick={clearSearchAndCloseMenu} className={mobileNavLinkClass}>
-            Home
+            Ana səhifə
           </Link>
 
           <Link
-            to={token ? "/favorite" : "/login"}
+            to={token ? "/my-cars" : "/login"}
             onClick={clearSearchAndCloseMenu}
             className={mobileNavLinkClass}
           >
-            Favorite
+            Mənim maşınlarım
           </Link>
 
           <Link
-            to={token ? "/basket" : "/login"}
+            to={token ? "/add-car" : "/login"}
             onClick={clearSearchAndCloseMenu}
             className={mobileNavLinkClass}
           >
-            Basket
+            Maşın əlavə et
           </Link>
 
           {token ? (
             <>
-              <Link to="/add-car" onClick={clearSearchAndCloseMenu} className={mobileNavLinkClass}>
-                Add car
-              </Link>
-
-              <Link to="/my-cars" onClick={clearSearchAndCloseMenu} className={mobileNavLinkClass}>
-                My cars
-              </Link>
-
-              <Link
-                to="/my-car-rentals"
-                onClick={clearSearchAndCloseMenu}
-                className={mobileNavLinkClass}
-              >
-                My Rentals
-              </Link>
 
               <Link to="/profile" onClick={clearSearchAndCloseMenu} className={mobileNavLinkClass}>
-                Profile
+                Profil
               </Link>
 
               <button
                 onClick={handleLogout}
                 className="group relative overflow-hidden w-full bg-yellow-400 text-black font-bold rounded px-4 py-2 transition-all duration-300 hover:bg-yellow-500 hover:-translate-y-[2px] hover:shadow-lg"
               >
-                <span className="relative z-10">Log out</span>
+                <span className="relative z-10">Çıxış</span>
               </button>
             </>
           ) : (
@@ -682,7 +641,7 @@ const Navbar = () => {
               onClick={clearSearchAndCloseMenu}
               className="group relative overflow-hidden block w-full text-center bg-yellow-400 text-black font-bold rounded px-4 py-2 transition-all duration-300 hover:bg-yellow-500 hover:-translate-y-[2px] hover:shadow-lg"
             >
-              <span className="relative z-10">Sign In</span>
+              <span className="relative z-10">Giriş et</span>
             </Link>
           )}
         </div>
