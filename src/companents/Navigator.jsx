@@ -14,6 +14,7 @@ import OwnerCarpage from "../pages/OwnerCarpage"
 import Searchpage from "../pages/Searchpage"
 import PageTransition from "../companents/PageTransition"
 import ForgotPasswordpage from "../pages/ForgotPasswordpage"
+import OwnerProfilepage from "../pages/OwnerProfilepage";
 
 const Navigator = () => {
   const location = useLocation()
@@ -128,6 +129,14 @@ const Navigator = () => {
         element={
           <PageTransition direction="bottom">
             <ForgotPasswordpage />
+          </PageTransition>
+        }
+      />
+      <Route
+        path="/owner-profile/:userId"
+        element={
+          <PageTransition direction="bottom">
+            <OwnerProfilepage />
           </PageTransition>
         }
       />
