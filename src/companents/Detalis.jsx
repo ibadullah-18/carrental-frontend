@@ -63,22 +63,38 @@ const PaintIcon = () => (
   </svg>
 )
 
+const ReportIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+    <path
+      d="M12 9v4M12 17h.01M10.3 4.6 2.9 17.4A2 2 0 0 0 4.6 20h14.8a2 2 0 0 0 1.7-2.6L13.7 4.6a2 2 0 0 0-3.4 0Z"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
 const InfoCard = ({ icon, label, value, dark }) => (
   <div
-    className={`group rounded-3xl p-4 border transition duration-300 hover:-translate-y-1 hover:shadow-xl ${
+    className={`group rounded-2xl sm:rounded-3xl p-3 sm:p-4 border transition duration-300 hover:-translate-y-1 hover:shadow-xl ${
       dark
         ? "bg-[#181818] border-white/10 hover:bg-[#202020]"
         : "bg-white border-black/10 hover:bg-[#fafafa]"
     }`}
   >
-    <div className="flex items-center gap-3">
-      <div className="w-11 h-11 rounded-2xl bg-yellow-400 text-black flex items-center justify-center shadow-md">
+    <div className="flex items-center gap-2.5 sm:gap-3">
+      <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-yellow-400 text-black flex items-center justify-center shadow-md flex-shrink-0">
         {icon}
       </div>
 
-      <div>
-        <p className="text-xs opacity-60">{label}</p>
-        <p className="font-black text-base mt-0.5">{value ?? "-"}</p>
+      <div className="min-w-0">
+        <p className="text-[10px] sm:text-xs opacity-60 leading-none">
+          {label}
+        </p>
+
+        <p className="font-black text-sm sm:text-base mt-1 truncate">
+          {value ?? "-"}
+        </p>
       </div>
     </div>
   </div>
@@ -105,6 +121,19 @@ const PlateBox = ({ plateNumber, dark }) => (
   </div>
 )
 
+const reasonOptions = [
+  { value: 1, label: "Yanlış məlumat" },
+  { value: 2, label: "Saxta elan" },
+  { value: 3, label: "Uyğunsuz məzmun" },
+  { value: 4, label: "Dələduzluq şübhəsi" },
+  { value: 5, label: "Digər" },
+]
+
+const getReasonLabel = (value) => {
+  const found = reasonOptions.find((item) => Number(item.value) === Number(value))
+  return found?.label || `Səbəb #${value || "-"}`
+}
+
 const Details = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -117,6 +146,17 @@ const Details = () => {
   const [error, setError] = useState("")
   const [activeIndex, setActiveIndex] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
+
+  const [reasonType, setReasonType] = useState(1)
+  const [reportDescription, setReportDescription] = useState("")
+  const [reportLoading, setReportLoading] = useState(false)
+  const [reportMessage, setReportMessage] = useState("")
+  const [reportError, setReportError] = useState("")
+
+  const [myReportsOpen, setMyReportsOpen] = useState(false)
+  const [myReports, setMyReports] = useState([])
+  const [myReportsLoading, setMyReportsLoading] = useState(false)
+  const [myReportsError, setMyReportsError] = useState("")
 
   const makeUrl = (path) => {
     if (!path) return null
@@ -192,6 +232,97 @@ const Details = () => {
       window.removeEventListener("keydown", closeOnEscape)
     }
   }, [modalOpen])
+
+ const fetchMyReports = async () => {
+  try {
+    setMyReportsLoading(true)
+    setMyReportsError("")
+
+    const res = await apiFetch("/api/Reports/my-reports")
+
+    const text = await res.text()
+    const data = text ? JSON.parse(text) : null
+
+    console.log("MY REPORTS RESPONSE:", data)
+
+    if (!res.ok) {
+      throw new Error(data?.message || "Reportlar yüklənmədi")
+    }
+
+    const reports =
+      Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.items)
+        ? data.items
+        : Array.isArray(data?.reports)
+        ? data.reports
+        : Array.isArray(data?.result)
+        ? data.result
+        : []
+
+    setMyReports(reports)
+  } catch (err) {
+    console.log("MY REPORTS ERROR:", err)
+    setMyReportsError(err.message || "Reportlar yüklənərkən xəta baş verdi")
+  } finally {
+    setMyReportsLoading(false)
+  }
+}
+
+  const toggleMyReports = async () => {
+    const next = !myReportsOpen
+    setMyReportsOpen(next)
+
+    if (next) {
+      await fetchMyReports()
+    }
+  }
+
+  const submitReport = async (e) => {
+    e.preventDefault()
+
+    if (!reportDescription.trim()) {
+      setReportError("Zəhmət olmasa açıqlama yaz")
+      setReportMessage("")
+      return
+    }
+
+    try {
+      setReportLoading(true)
+      setReportError("")
+      setReportMessage("")
+
+      const res = await apiFetch("/api/Reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          carId: car?.id || id,
+          reasonType: Number(reasonType),
+          description: reportDescription.trim(),
+        }),
+      })
+
+      if (!res.ok) {
+        throw new Error("Report göndərilmədi")
+      }
+
+      setReportDescription("")
+      setReasonType(1)
+      setReportMessage("Report uğurla göndərildi")
+
+      if (myReportsOpen) {
+        await fetchMyReports()
+      }
+    } catch (err) {
+      setReportError(err.message || "Report göndərilərkən xəta baş verdi")
+    } finally {
+      setReportLoading(false)
+    }
+  }
 
   const media = useMemo(() => {
     const items = Array.isArray(car?.media) ? car.media : []
@@ -455,7 +586,7 @@ const Details = () => {
                   <span className="text-2xl opacity-50">›</span>
                 </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+                <div className="grid grid-cols-2 sm:grid-cols-2 gap-2.5 sm:gap-3 mt-4 sm:mt-5">
                   <InfoCard
                     icon={<CalendarIcon />}
                     label="Buraxılış ili"
@@ -489,27 +620,152 @@ const Details = () => {
           </div>
 
           <div
-            className={`mt-5 rounded-[34px] p-5 sm:p-6 border shadow-xl ${
+            className={`mt-4 rounded-[24px] p-4 sm:p-5 border shadow-xl ${
               isDarkmodeEnabled
                 ? "bg-[#111] border-white/10"
                 : "bg-white border-black/10"
             }`}
           >
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <h2 className="text-2xl font-black">Açıqlama</h2>
-
-              <span className="px-4 py-2 rounded-full text-xs font-black bg-yellow-400 text-black">
-                {media.length} media
-              </span>
+            <div className="flex items-center justify-between gap-4 mb-3">
+              <h2 className="text-xl sm:text-2xl font-black">Açıqlama</h2>
             </div>
 
             <p
-              className={`leading-7 text-sm sm:text-base ${
+              className={`leading-6 text-[14px] sm:text-base ${
                 isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
               }`}
             >
               {car.description || "Bu maşın üçün açıqlama əlavə edilməyib."}
             </p>
+          </div>
+
+          <div
+            className={`mt-4 max-w-[520px] rounded-[22px] p-4 border shadow-lg ${
+              isDarkmodeEnabled
+                ? "bg-[#111] border-white/10"
+                : "bg-white border-black/10"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-yellow-400 text-black flex items-center justify-center">
+                  <ReportIcon />
+                </div>
+
+                <div>
+                  <h3 className="font-black text-base">Elanı report et</h3>
+                  <p className="text-xs opacity-60">Problem varsa bizə bildir.</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={toggleMyReports}
+                className={`px-3 py-2 rounded-xl text-xs font-black border transition ${
+                  isDarkmodeEnabled
+                    ? "bg-[#181818] border-white/10 hover:bg-[#222]"
+                    : "bg-[#fafafa] border-black/10 hover:bg-[#f1f1f1]"
+                }`}
+              >
+                Mənim reportlarım
+              </button>
+            </div>
+
+            {myReportsOpen && (
+              <div
+                className={`mb-3 rounded-2xl border p-3 ${
+                  isDarkmodeEnabled
+                    ? "bg-[#181818] border-white/10"
+                    : "bg-[#fafafa] border-black/10"
+                }`}
+              >
+                {myReportsLoading ? (
+                  <p className="text-sm opacity-70">Yüklənir...</p>
+                ) : myReportsError ? (
+                  <p className="text-sm text-red-500">{myReportsError}</p>
+                ) : myReports.length === 0 ? (
+                  <p className="text-sm opacity-70">Hələ report yoxdur.</p>
+                ) : (
+                  <div className="max-h-[180px] overflow-y-auto space-y-2">
+                    {myReports.map((report, index) => (
+                      <div
+                        key={report.id || index}
+                        className={`rounded-xl p-2 border text-sm ${
+                          isDarkmodeEnabled
+                            ? "bg-[#111] border-white/10"
+                            : "bg-white border-black/10"
+                        }`}
+                      >
+                        <p className="font-black text-xs">
+                          {getReasonLabel(report.reasonType)}
+                        </p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {report.description || "Açıqlama yoxdur"}
+                        </p>
+
+                        {(report.createdAt || report.createdDate) && (
+                          <p className="text-[10px] opacity-50 mt-1">
+                            {new Date(
+                              report.createdAt || report.createdDate
+                            ).toLocaleString("az-AZ")}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={submitReport} className="space-y-2">
+              <select
+                value={reasonType}
+                onChange={(e) => setReasonType(e.target.value)}
+                className={`w-full rounded-xl px-3 py-2 text-sm outline-none border ${
+                  isDarkmodeEnabled
+                    ? "bg-[#181818] border-white/10 text-white"
+                    : "bg-[#fafafa] border-black/10 text-black"
+                }`}
+              >
+                {reasonOptions.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+
+              <textarea
+                value={reportDescription}
+                onChange={(e) => setReportDescription(e.target.value)}
+                rows={2}
+                placeholder="Qısa açıqlama yaz..."
+                className={`w-full rounded-xl px-3 py-2 text-sm outline-none border resize-none ${
+                  isDarkmodeEnabled
+                    ? "bg-[#181818] border-white/10 text-white placeholder:text-gray-500"
+                    : "bg-[#fafafa] border-black/10 text-black placeholder:text-gray-400"
+                }`}
+              />
+
+              {reportError && (
+                <p className="text-xs font-semibold text-red-500">
+                  {reportError}
+                </p>
+              )}
+
+              {reportMessage && (
+                <p className="text-xs font-semibold text-green-500">
+                  {reportMessage}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={reportLoading}
+                className="px-4 py-2 rounded-xl bg-yellow-400 text-black text-sm font-black hover:bg-yellow-300 transition disabled:opacity-60"
+              >
+                {reportLoading ? "Göndərilir..." : "Göndər"}
+              </button>
+            </form>
           </div>
         </div>
       </div>

@@ -166,12 +166,12 @@ const Login = () => {
         </form>
 
         <p className="text-center mt-4 sm:mt-5 text-white text-sm sm:text-base">
-          Don't you have an account?{" "}
+          Hesabın yoxdur?{" "}
           <Link
             to="/register"
             className="text-yellow-400 hover:underline"
           >
-            Register
+            Qeydiyyatdan keç
           </Link>
         </p>
       </div>

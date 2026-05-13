@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import Carcart from "../companents/Carcart";
 import Loading from "../companents/Loading";
@@ -11,6 +12,7 @@ const Homepage = () => {
   const [cars, setCars] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [canSearchByPlate, setCanSearchByPlate] = useState(false);
 
   const [visibleCount, setVisibleCount] = useState(
     window.innerWidth >= 1024 ? 6 : 4
@@ -18,34 +20,27 @@ const Homepage = () => {
 
   const { isDarkmodeEnabled } = useDarkmode();
 
+  const normalizeArray = (data) => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.$values)) return data.$values;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  };
+
   const getCars = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await apiFetch("/api/Cars", {
-        method: "GET",
-      });
+      const response = await apiFetch("/api/Cars", { method: "GET" });
 
       if (!response.ok) {
         throw new Error("Serverdən məlumat gəlmədi");
       }
 
       const data = await response.json();
-
-      let carsData = [];
-
-      if (Array.isArray(data)) {
-        carsData = data;
-      } else if (Array.isArray(data.$values)) {
-        carsData = data.$values;
-      } else if (Array.isArray(data.items)) {
-        carsData = data.items;
-      } else if (Array.isArray(data.data)) {
-        carsData = data.data;
-      }
-
-      setCars(carsData);
+      setCars(normalizeArray(data));
     } catch (err) {
       console.log(err);
       setError("Maşınları gətirərkən xəta baş verdi");
@@ -54,16 +49,30 @@ const Homepage = () => {
     }
   };
 
+  const checkPlateSearchPermission = async () => {
+    try {
+      const response = await apiFetch("/api/Cars/search?plate=0000000", {
+        method: "GET",
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        setCanSearchByPlate(false);
+        return;
+      }
+
+      setCanSearchByPlate(response.ok);
+    } catch {
+      setCanSearchByPlate(false);
+    }
+  };
+
   useEffect(() => {
     getCars();
+    checkPlateSearchPermission();
   }, []);
 
   const handleLoadMore = () => {
-    if (window.innerWidth >= 1024) {
-      setVisibleCount((prev) => prev + 6);
-    } else {
-      setVisibleCount((prev) => prev + 4);
-    }
+    setVisibleCount((prev) => prev + (window.innerWidth >= 1024 ? 6 : 4));
   };
 
   if (loading) return <Loading />;
@@ -72,9 +81,7 @@ const Homepage = () => {
     return (
       <div
         className={`w-full min-h-screen ${
-          isDarkmodeEnabled
-            ? "bg-[#1a1a1a] text-white"
-            : "bg-white text-black"
+          isDarkmodeEnabled ? "bg-[#1a1a1a] text-white" : "bg-white text-black"
         }`}
       >
         <div className="flex justify-center items-center mt-20 text-red-500 text-xl">
@@ -87,16 +94,12 @@ const Homepage = () => {
   return (
     <div
       className={`w-full min-h-screen ${
-        isDarkmodeEnabled
-          ? "bg-[#1a1a1a] text-white"
-          : "bg-white text-black"
+        isDarkmodeEnabled ? "bg-[#1a1a1a] text-white" : "bg-white text-black"
       }`}
     >
-      {/* HERO SECTION */}
       <section className="w-full bg-black overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-10">
           <div className="rounded-[18px] sm:rounded-[22px] bg-black text-white overflow-hidden px-4 sm:px-8 lg:px-12 pt-8 sm:pt-10 lg:pt-12">
-            
             <div className="max-w-[850px] mx-auto text-center">
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold leading-tight">
                 Öz maşınını paylaş,
@@ -105,8 +108,8 @@ const Homepage = () => {
               </h1>
 
               <p className="mt-4 text-sm sm:text-base lg:text-lg text-gray-300 max-w-[700px] mx-auto leading-7">
-                İstifadəçilər öz maşınlarını əlavə edir,
-                digər insanlar isə maşınlara baxıb onları kəşf edir.
+                İstifadəçilər öz maşınlarını əlavə edir, digər insanlar isə
+                maşınlara baxıb onları kəşf edir.
               </p>
             </div>
 
@@ -114,24 +117,46 @@ const Homepage = () => {
               <img
                 src={BMW}
                 alt="BMW"
-                className="
-                  w-full
-                  max-w-[1100px]
-                  h-[170px] sm:h-[250px] lg:h-[320px]
-                  object-contain
-                "
+                className="w-full max-w-[1100px] h-[170px] sm:h-[250px] lg:h-[320px] object-contain"
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* CARS */}
       <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-8 sm:pt-10 md:pt-12">
-        <div className="flex items-center justify-between mb-5 sm:mb-6">
-          <h2 className="text-xl sm:text-3xl font-bold">
-            Mövcud maşınlar
-          </h2>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 sm:mb-6">
+          <h2 className="text-xl sm:text-3xl font-bold">Mövcud maşınlar</h2>
+
+          {canSearchByPlate && (
+            <Link
+              to="/search-plate"
+              className="
+                group inline-flex items-center gap-3
+                rounded-2xl bg-black px-4 py-3
+                text-white shadow-lg
+                hover:-translate-y-1 hover:shadow-2xl
+                active:scale-95 transition-all duration-300
+              "
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-400 text-black text-lg">
+                🇦🇿
+              </span>
+
+              <span className="text-left">
+                <span className="block text-sm font-bold leading-none">
+                  Nömrə ilə axtar
+                </span>
+                <span className="block mt-1 text-xs text-white/60">
+                  10 AA 010
+                </span>
+              </span>
+
+              <span className="text-xl transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
+          )}
         </div>
 
         {cars.length === 0 ? (
@@ -141,10 +166,7 @@ const Homepage = () => {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-5 justify-items-center">
             {cars.slice(0, visibleCount).map((car) => (
-              <Carcart
-                key={car.id || car.carId}
-                car={car}
-              />
+              <Carcart key={car.id || car.carId} car={car} />
             ))}
           </div>
         )}
@@ -163,16 +185,13 @@ const Homepage = () => {
                 transition-all duration-300 ease-in-out
               "
             >
-              <span className="relative z-10">
-                Daha çox göstər
-              </span>
+              Daha çox göstər
             </button>
           </div>
         )}
       </div>
 
       <Info />
-
       <Footer />
     </div>
   );

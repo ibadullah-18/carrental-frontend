@@ -45,7 +45,7 @@ const MyCars = () => {
     ? "bg-[#111111] border-white/10"
     : "bg-[#f7f7f7] border-gray-200";
 
-  const inputClassName = `w-full h-[46px] px-4 rounded-xl outline-none border transition ${
+  const inputClassName = `w-full h-[40px] px-3 rounded-lg outline-none border text-sm transition ${
     isDarkmodeEnabled
       ? "bg-[#171717] border-white/15 text-white placeholder-gray-400 focus:border-red-500"
       : "bg-white border-gray-200 text-black placeholder-gray-500 focus:border-red-500"
@@ -140,15 +140,6 @@ const MyCars = () => {
       };
     }
 
-    if (isDeactivated === true || isActive === false || daysLeft <= 0) {
-      return {
-        text: "Aktiv deyil",
-        className: "bg-gray-600 text-white",
-        softClassName: "bg-gray-500/10 text-gray-400 border-gray-500/20",
-        dot: "bg-gray-400",
-      };
-    }
-
     return {
       text: "Aktiv deyil",
       className: "bg-gray-600 text-white",
@@ -159,7 +150,6 @@ const MyCars = () => {
 
   const getDaysLeftText = (car) => {
     const daysLeft = Number(car.daysLeft ?? car.DaysLeft ?? 0);
-
     if (daysLeft <= 0) return "Bitib";
     return `${daysLeft} gün`;
   };
@@ -340,10 +330,7 @@ const MyCars = () => {
 
       closeDeactivateModal();
     } catch (error) {
-      showToast(
-        error.message || "Deaktiv etmə zamanı xəta baş verdi",
-        "error"
-      );
+      showToast(error.message || "Deaktiv etmə zamanı xəta baş verdi", "error");
     } finally {
       setDeactivateLoadingId(null);
     }
@@ -525,18 +512,18 @@ const MyCars = () => {
       />
 
       {paymentModalOpen && (
-        <div className="fixed inset-0 z-[9998] bg-black/70 backdrop-blur-sm px-3 py-5 overflow-y-auto">
+        <div className="fixed inset-0 z-[9998] bg-black/70 backdrop-blur-sm px-3 py-4 overflow-y-auto">
           <div
-            className={`max-w-[980px] mx-auto rounded-[26px] border p-4 sm:p-6 ${cardClassName}`}
+            className={`max-w-[860px] mx-auto rounded-[22px] border p-3 sm:p-4 ${cardClassName}`}
           >
-            <div className="flex items-start justify-between gap-4 mb-5">
+            <div className="flex items-start justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black">
+                <h2 className="text-xl sm:text-2xl font-black">
                   Ödənişi yenilə
                 </h2>
 
                 <p
-                  className={`mt-1 text-sm ${
+                  className={`mt-1 text-xs ${
                     isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
                   }`}
                 >
@@ -548,7 +535,7 @@ const MyCars = () => {
               <button
                 type="button"
                 onClick={closePaymentModal}
-                className="w-10 h-10 rounded-full bg-red-500 text-white font-black"
+                className="w-9 h-9 rounded-full bg-red-500 text-white font-black"
               >
                 ×
               </button>
@@ -556,28 +543,28 @@ const MyCars = () => {
 
             <form
               onSubmit={handleRenewPayment}
-              className="grid grid-cols-1 lg:grid-cols-12 gap-5"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-4"
             >
-              <div className="lg:col-span-5 space-y-4">
-                <div className={`rounded-2xl border p-4 ${statBoxClass}`}>
-                  <p className="text-sm opacity-70">Maşın</p>
-                  <h3 className="text-xl font-black mt-1">
+              <div className="lg:col-span-5 space-y-3">
+                <div className={`rounded-2xl border p-3 ${statBoxClass}`}>
+                  <p className="text-xs opacity-70">Maşın</p>
+                  <h3 className="text-lg font-black mt-1">
                     {selectedCar?.brand} {selectedCar?.model}
                   </h3>
 
-                  <p className="text-sm opacity-70 mt-3">Dövlət nömrəsi</p>
-                  <h4 className="text-lg font-black tracking-[3px] mt-1">
+                  <p className="text-xs opacity-70 mt-2">Dövlət nömrəsi</p>
+                  <h4 className="text-base font-black tracking-[3px] mt-1">
                     {formatPlateNumber(selectedCar?.plateNumber)}
                   </h4>
                 </div>
 
-                <div className={`rounded-2xl border p-4 ${statBoxClass}`}>
-                  <h3 className="font-black mb-3">Paket seç</h3>
+                <div className={`rounded-2xl border p-3 ${statBoxClass}`}>
+                  <h3 className="font-black mb-2 text-sm">Paket seç</h3>
 
                   {loadingPackages ? (
                     <p className="text-sm opacity-70">Paketlər yüklənir...</p>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       {packages.map((item) => {
                         const selected = selectedPackageId === item.id;
 
@@ -586,7 +573,7 @@ const MyCars = () => {
                             key={item.id}
                             type="button"
                             onClick={() => setSelectedPackageId(item.id)}
-                            className={`text-left rounded-2xl border p-4 transition ${
+                            className={`text-left rounded-xl border p-3 transition ${
                               selected
                                 ? "bg-red-500 border-red-500 text-white"
                                 : isDarkmodeEnabled
@@ -595,20 +582,22 @@ const MyCars = () => {
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <h4 className="font-black">{item.name}</h4>
+                              <h4 className="font-black text-sm line-clamp-1">
+                                {item.name}
+                              </h4>
 
                               {item.isVip && (
-                                <span className="bg-yellow-400 text-black text-[10px] font-black px-2 py-1 rounded-full">
+                                <span className="bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full">
                                   VIP
                                 </span>
                               )}
                             </div>
 
-                            <p className="text-sm opacity-80 mt-1">
+                            <p className="text-xs opacity-80 mt-1">
                               {item.durationDays} gün
                             </p>
 
-                            <p className="text-2xl font-black mt-2">
+                            <p className="text-lg font-black mt-1">
                               {item.price} {item.currency}
                             </p>
                           </button>
@@ -620,41 +609,41 @@ const MyCars = () => {
               </div>
 
               <div className="lg:col-span-7">
-                <div className="rounded-[28px] p-5 sm:p-6 bg-gradient-to-br from-[#111] via-[#2a2a2a] to-[#8b0000] text-white shadow-2xl mb-5">
+                <div className="rounded-[20px] p-4 bg-gradient-to-br from-[#111] via-[#2a2a2a] to-[#8b0000] text-white shadow-2xl mb-4">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-xs opacity-70">MyCar ödəniş kartı</p>
-                      <p className="text-xl font-black mt-1">
+                      <p className="text-lg font-black mt-1">
                         {selectedPackage?.price || 0}{" "}
                         {selectedPackage?.currency || "AZN"}
                       </p>
                     </div>
 
-                    <div className="w-12 h-8 rounded-lg bg-white/20 border border-white/30" />
+                    <div className="w-10 h-7 rounded-lg bg-white/20 border border-white/30" />
                   </div>
 
-                  <p className="mt-8 text-xl sm:text-2xl tracking-[3px] sm:tracking-[4px] font-bold">
+                  <p className="mt-6 text-lg sm:text-xl tracking-[3px] font-bold">
                     {cardNumber || "0000 0000 0000 0000"}
                   </p>
 
-                  <div className="flex justify-between mt-6 text-sm">
+                  <div className="flex justify-between mt-5 text-xs">
                     <div>
-                      <p className="opacity-60 text-xs">Kart sahibi</p>
+                      <p className="opacity-60 text-[10px]">Kart sahibi</p>
                       <p className="font-bold uppercase">
                         {cardName || "AD SOYAD"}
                       </p>
                     </div>
 
                     <div>
-                      <p className="opacity-60 text-xs">Tarix</p>
+                      <p className="opacity-60 text-[10px]">Tarix</p>
                       <p className="font-bold">{cardExpire || "MM/YY"}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="sm:col-span-2">
-                    <label className="block mb-2 text-sm font-medium">
+                    <label className="block mb-1.5 text-xs font-medium">
                       Kart sahibinin adı
                     </label>
 
@@ -668,7 +657,7 @@ const MyCars = () => {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block mb-2 text-sm font-medium">
+                    <label className="block mb-1.5 text-xs font-medium">
                       Kart nömrəsi
                     </label>
 
@@ -685,7 +674,7 @@ const MyCars = () => {
                   </div>
 
                   <div>
-                    <label className="block mb-2 text-sm font-medium">
+                    <label className="block mb-1.5 text-xs font-medium">
                       Bitmə tarixi
                     </label>
 
@@ -700,7 +689,7 @@ const MyCars = () => {
                   </div>
 
                   <div>
-                    <label className="block mb-2 text-sm font-medium">
+                    <label className="block mb-1.5 text-xs font-medium">
                       CVV
                     </label>
 
@@ -709,7 +698,9 @@ const MyCars = () => {
                       inputMode="numeric"
                       value={cardCvv}
                       onChange={(e) =>
-                        setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
+                        setCardCvv(
+                          e.target.value.replace(/\D/g, "").slice(0, 4)
+                        )
                       }
                       placeholder="***"
                       className={inputClassName}
@@ -720,7 +711,7 @@ const MyCars = () => {
                 <button
                   type="submit"
                   disabled={!!payingCarId}
-                  className="mt-5 w-full h-[48px] rounded-xl bg-red-500 text-white font-black hover:bg-red-600 transition disabled:opacity-60"
+                  className="mt-4 w-full h-[42px] rounded-lg bg-red-500 text-white font-black hover:bg-red-600 transition disabled:opacity-60"
                 >
                   {payingCarId ? "Ödəniş edilir..." : "Ödənişi tamamla"}
                 </button>

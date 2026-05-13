@@ -3,18 +3,17 @@ import { useEffect } from "react"
 
 import Homepage from "../pages/Homepage"
 import Loginpage from "../pages/Loginpage"
-import Rentalpage from "../pages/Rentalpage"
 import Detailspage from "../pages/Detalispage"
 import Registerpage from "../pages/Registerpage"
 import AddCarpage from "../pages/AddCarpage"
 import Profilepage from "../pages/Profilepage"
 import Mycarspage from "../pages/Maycarspage"
 import UpdateCarpage from "../pages/UpdateCarpage"
-import OwnerCarpage from "../pages/OwnerCarpage"
 import Searchpage from "../pages/Searchpage"
 import PageTransition from "../companents/PageTransition"
 import ForgotPasswordpage from "../pages/ForgotPasswordpage"
 import OwnerProfilepage from "../pages/OwnerProfilepage";
+import SearchPlatepage from "../pages/SearchPlatepage";
 
 const Navigator = () => {
   const location = useLocation()
@@ -40,15 +39,6 @@ const Navigator = () => {
         element={
           <PageTransition direction="bottom">
             <Loginpage />
-          </PageTransition>
-        }
-      />
-
-      <Route
-        path="/rentals/:id"
-        element={
-          <PageTransition direction="right">
-            <Rentalpage />
           </PageTransition>
         }
       />
@@ -108,15 +98,6 @@ const Navigator = () => {
       />
 
       <Route
-        path="/owner-cars/:ownerId"
-        element={
-          <PageTransition direction="right">
-            <OwnerCarpage />
-          </PageTransition>
-        }
-      />
-
-      <Route
         path="/search"
         element={
           <PageTransition direction="top">
@@ -137,6 +118,14 @@ const Navigator = () => {
         element={
           <PageTransition direction="bottom">
             <OwnerProfilepage />
+          </PageTransition>
+        }
+      />
+      <Route
+        path="/search-plate"
+        element={
+          <PageTransition direction="bottom">
+            <SearchPlatepage />
           </PageTransition>
         }
       />

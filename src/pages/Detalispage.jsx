@@ -6,7 +6,6 @@ const Detailspage = () => {
     return (
         <div>
             <Details />
-            <Info />
             <Footer />
         </div>
     )
