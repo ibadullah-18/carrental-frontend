@@ -28,6 +28,16 @@ const Homepage = () => {
     return [];
   };
 
+  const isLoggedIn = () => {
+    const token =
+      localStorage.getItem("token") ||
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("token") ||
+      sessionStorage.getItem("accessToken");
+
+    return !!token;
+  };
+
   const getCars = async () => {
     try {
       setLoading(true);
@@ -50,6 +60,11 @@ const Homepage = () => {
   };
 
   const checkPlateSearchPermission = async () => {
+    if (!isLoggedIn()) {
+      setCanSearchByPlate(false);
+      return;
+    }
+
     try {
       const response = await apiFetch("/api/Cars/search?plate=0000000", {
         method: "GET",
@@ -75,7 +90,9 @@ const Homepage = () => {
     setVisibleCount((prev) => prev + (window.innerWidth >= 1024 ? 6 : 4));
   };
 
-  if (loading) return <Loading />;
+  if (loading) {
+    return <Loading />;
+  }
 
   if (error) {
     return (
