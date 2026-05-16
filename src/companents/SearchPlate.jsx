@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import { apiFetch } from "../utils/apiFetch";
@@ -20,16 +20,15 @@ const getFileUrl = (url) => {
 };
 
 const formatPlate = (value) => {
-  const clean = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-
-  const city = clean.slice(0, 2).replace(/\D/g, "");
-  const letters = clean.slice(2, 4).replace(/[^A-Z]/g, "");
-  const numbers = clean.slice(4, 7).replace(/\D/g, "");
-
-  return [city, letters, numbers].filter(Boolean).join(" ");
+  return value
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 10);
 };
 
-const plateForApi = (value) => value.replace(/\s/g, "").toUpperCase();
+const plateForApi = (value) => {
+  return value.replace(/\s/g, "").toUpperCase().slice(0, 10);
+};
 
 const SearchPlate = () => {
   const { isDarkmodeEnabled } = useDarkmode();
@@ -67,17 +66,13 @@ const SearchPlate = () => {
     const entries = await Promise.all(
       uniqueUserIds.map(async (userId) => {
         try {
-          const res = await apiFetch(
-            `/api/Users/${userId}/public-profile`,
-            {
-              method: "GET",
-            }
-          );
+          const res = await apiFetch(`/api/Users/${userId}/public-profile`, {
+            method: "GET",
+          });
 
           if (!res.ok) return [userId, null];
 
           const data = await res.json();
-
           return [userId, data];
         } catch {
           return [userId, null];
@@ -91,8 +86,8 @@ const SearchPlate = () => {
   const handleSearch = async () => {
     const apiPlate = plateForApi(plate);
 
-    if (apiPlate.length < 7) {
-      setError("Nömrəni tam daxil et: məsələn 10 AA 010");
+    if (apiPlate.length < 1) {
+      setError("Nömrə daxil et");
       return;
     }
 
@@ -140,40 +135,31 @@ const SearchPlate = () => {
 
   const nextCar = () => {
     if (!cars.length) return;
-
     setActiveCarIndex((prev) => (prev + 1) % cars.length);
     setActiveMediaIndex(0);
   };
 
   const prevCar = () => {
     if (!cars.length) return;
-
-    setActiveCarIndex((prev) =>
-      prev === 0 ? cars.length - 1 : prev - 1
-    );
-
+    setActiveCarIndex((prev) => (prev === 0 ? cars.length - 1 : prev - 1));
     setActiveMediaIndex(0);
   };
 
   const nextMedia = () => {
     if (!media.length) return;
-
     setActiveMediaIndex((prev) => (prev + 1) % media.length);
   };
 
   const prevMedia = () => {
     if (!media.length) return;
-
-    setActiveMediaIndex((prev) =>
-      prev === 0 ? media.length - 1 : prev - 1
-    );
+    setActiveMediaIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1));
   };
 
   return (
     <div
       className={`min-h-screen ${
         isDarkmodeEnabled
-          ? "bg-[#111111] text-white"
+          ? "bg-[#070707] text-[#f5f5f5]"
           : "bg-[#f4f4f4] text-black"
       }`}
     >
@@ -181,24 +167,30 @@ const SearchPlate = () => {
         <div className="flex items-center justify-between gap-4">
           <Link
             to="/"
-            className="
-              rounded-xl bg-black
-              px-4 py-2.5
-              text-sm font-bold text-white
+            className={`
+              rounded-xl px-4 py-2.5
+              text-sm font-bold
               shadow-md
               hover:-translate-y-0.5
               transition
-            "
+              ${
+                isDarkmodeEnabled
+                  ? "bg-[#181818] text-white border border-white/10 hover:bg-[#222222]"
+                  : "bg-black text-white"
+              }
+            `}
           >
             ← Geri
           </Link>
 
           <div className="text-right">
-            <h1 className="text-xl sm:text-2xl font-black">
-              ShowCar
-            </h1>
+            <h1 className="text-xl sm:text-2xl font-black">ShowCar</h1>
 
-            <p className="text-xs text-gray-500">
+            <p
+              className={`text-xs ${
+                isDarkmodeEnabled ? "text-white/45" : "text-gray-500"
+              }`}
+            >
               Nömrə ilə axtarış
             </p>
           </div>
@@ -212,32 +204,33 @@ const SearchPlate = () => {
               shadow-lg
               ${
                 isDarkmodeEnabled
-                  ? "bg-white/5"
+                  ? "bg-[#121212] border border-white/10 shadow-black/40"
                   : "bg-white"
               }
             `}
           >
-            <div className="flex overflow-hidden rounded-xl border-2 border-black bg-white">
+            <div
+              className={`
+                flex overflow-hidden rounded-xl border-2 bg-white
+                ${isDarkmodeEnabled ? "border-yellow-400/80" : "border-black"}
+              `}
+            >
               <div className="flex w-[58px] shrink-0 flex-col items-center justify-center bg-[#0b5ed7] text-white">
                 <span className="text-xl">🇦🇿</span>
 
-                <span className="text-[10px] font-black">
-                  AZ
-                </span>
+                <span className="text-[10px] font-black">AZ</span>
               </div>
 
               <input
                 value={plate}
-                onChange={(e) =>
-                  setPlate(formatPlate(e.target.value))
-                }
+                onChange={(e) => setPlate(formatPlate(e.target.value))}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleSearch();
                   }
                 }}
-                maxLength={9}
-                placeholder="10 AA 010"
+                maxLength={10}
+                placeholder="77 MF 835"
                 className="
                   w-full bg-white
                   px-3 py-3
@@ -270,13 +263,17 @@ const SearchPlate = () => {
 
             {error && (
               <div
-                className="
+                className={`
                   mt-3 rounded-xl
-                  bg-red-50
                   px-4 py-2.5
                   text-center text-sm
-                  font-bold text-red-500
-                "
+                  font-bold
+                  ${
+                    isDarkmodeEnabled
+                      ? "bg-red-500/10 text-red-300 border border-red-500/20"
+                      : "bg-red-50 text-red-500"
+                  }
+                `}
               >
                 {error}
               </div>
@@ -293,7 +290,6 @@ const SearchPlate = () => {
               animate-[fadeUp_.35s_ease]
             "
           >
-            {/* LEFT */}
             <div className="overflow-hidden rounded-3xl bg-black shadow-2xl">
               <div
                 className="
@@ -313,21 +309,15 @@ const SearchPlate = () => {
                   ) : (
                     <img
                       src={getFileUrl(selectedMedia.fileUrl)}
-                      alt={`${activeCar.brand || ""} ${
-                        activeCar.model || ""
-                      }`}
+                      alt={`${activeCar.brand || ""} ${activeCar.model || ""}`}
                       className="h-full w-full object-contain"
                     />
                   )
                 ) : (
                   <div className="text-center text-white">
-                    <div className="text-7xl">
-                      🚗
-                    </div>
+                    <div className="text-7xl">🚗</div>
 
-                    <p className="mt-3 font-bold">
-                      Media yoxdur
-                    </p>
+                    <p className="mt-3 font-bold">Media yoxdur</p>
                   </div>
                 )}
 
@@ -369,9 +359,7 @@ const SearchPlate = () => {
                   {media.map((item, index) => (
                     <button
                       key={item.id || index}
-                      onClick={() =>
-                        setActiveMediaIndex(index)
-                      }
+                      onClick={() => setActiveMediaIndex(index)}
                       className={`
                         h-16 w-24 shrink-0
                         overflow-hidden rounded-xl
@@ -406,14 +394,13 @@ const SearchPlate = () => {
               )}
             </div>
 
-            {/* RIGHT */}
             <div
               className={`
                 rounded-3xl p-5 sm:p-6
                 shadow-xl h-fit
                 ${
                   isDarkmodeEnabled
-                    ? "bg-white/5"
+                    ? "bg-[#121212] border border-white/10 shadow-black/50"
                     : "bg-white"
                 }
               `}
@@ -422,11 +409,15 @@ const SearchPlate = () => {
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <button
                     onClick={prevCar}
-                    className="
-                      rounded-xl bg-black
-                      px-4 py-2
-                      text-sm font-bold text-white
-                    "
+                    className={`
+                      rounded-xl px-4 py-2
+                      text-sm font-bold
+                      ${
+                        isDarkmodeEnabled
+                          ? "bg-[#1f1f1f] text-white border border-white/10"
+                          : "bg-black text-white"
+                      }
+                    `}
                   >
                     ←
                   </button>
@@ -437,11 +428,15 @@ const SearchPlate = () => {
 
                   <button
                     onClick={nextCar}
-                    className="
-                      rounded-xl bg-black
-                      px-4 py-2
-                      text-sm font-bold text-white
-                    "
+                    className={`
+                      rounded-xl px-4 py-2
+                      text-sm font-bold
+                      ${
+                        isDarkmodeEnabled
+                          ? "bg-[#1f1f1f] text-white border border-white/10"
+                          : "bg-black text-white"
+                      }
+                    `}
                   >
                     →
                   </button>
@@ -453,98 +448,118 @@ const SearchPlate = () => {
               </h2>
 
               <div className="mt-5 space-y-3">
-                <div className="rounded-2xl bg-gray-100 p-4">
+                {[
+                  ["Marka", activeCar.brand || "Yoxdur"],
+                  ["Model", activeCar.model || "Yoxdur"],
+                  ["Buraxılış ili", activeCar.year || "Qeyd edilməyib"],
+                ].map(([label, value]) => (
                   <div
-                    className="
-                      text-xs font-black
-                      uppercase text-gray-400
-                    "
+                    key={label}
+                    className={`
+                      rounded-2xl p-4
+                      ${
+                        isDarkmodeEnabled
+                          ? "bg-[#1a1a1a] border border-white/10"
+                          : "bg-gray-100"
+                      }
+                    `}
                   >
-                    Marka
-                  </div>
+                    <div
+                      className={`
+                        text-xs font-black uppercase
+                        ${
+                          isDarkmodeEnabled
+                            ? "text-yellow-400/80"
+                            : "text-gray-400"
+                        }
+                      `}
+                    >
+                      {label}
+                    </div>
 
-                  <div className="mt-1 text-lg font-black text-black">
-                    {activeCar.brand || "Yoxdur"}
+                    <div
+                      className={`mt-1 text-lg font-black ${
+                        isDarkmodeEnabled ? "text-white" : "text-black"
+                      }`}
+                    >
+                      {value}
+                    </div>
                   </div>
-                </div>
+                ))}
 
-                <div className="rounded-2xl bg-gray-100 p-4">
+                <div
+                  className={`
+                    rounded-2xl p-4
+                    ${
+                      isDarkmodeEnabled
+                        ? "bg-[#1a1a1a] border border-white/10"
+                        : "bg-gray-100"
+                    }
+                  `}
+                >
                   <div
-                    className="
-                      text-xs font-black
-                      uppercase text-gray-400
-                    "
-                  >
-                    Model
-                  </div>
-
-                  <div className="mt-1 text-lg font-black text-black">
-                    {activeCar.model || "Yoxdur"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-gray-100 p-4">
-                  <div
-                    className="
-                      text-xs font-black
-                      uppercase text-gray-400
-                    "
-                  >
-                    Buraxılış ili
-                  </div>
-
-                  <div className="mt-1 text-lg font-black text-black">
-                    {activeCar.year || "Qeyd edilməyib"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-gray-100 p-4">
-                  <div
-                    className="
-                      text-xs font-black
-                      uppercase text-gray-400
-                    "
+                    className={`
+                      text-xs font-black uppercase
+                      ${
+                        isDarkmodeEnabled
+                          ? "text-yellow-400/80"
+                          : "text-gray-400"
+                      }
+                    `}
                   >
                     Comment
                   </div>
 
                   <div
-                    className="
-                      mt-1 text-sm leading-6
-                      font-semibold text-gray-700
-                    "
+                    className={`mt-1 text-sm leading-6 font-semibold ${
+                      isDarkmodeEnabled ? "text-white/75" : "text-gray-700"
+                    }`}
                   >
-                    {activeCar.description ||
-                      "Comment yoxdur"}
+                    {activeCar.description || "Comment yoxdur"}
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-black p-4 text-white">
+                <div
+                  className={`
+                    rounded-2xl p-4
+                    ${
+                      isDarkmodeEnabled
+                        ? "bg-yellow-400 text-black"
+                        : "bg-black text-white"
+                    }
+                  `}
+                >
                   <div
-                    className="
-                      text-xs font-black
-                      uppercase text-white/50
-                    "
+                    className={`
+                      text-xs font-black uppercase
+                      ${
+                        isDarkmodeEnabled ? "text-black/55" : "text-white/50"
+                      }
+                    `}
                   >
                     Baxış sayı
                   </div>
 
                   <div className="mt-1 text-2xl font-black">
-                  {activeCar.viewsCount || activeCar.viewCount || 0}
+                    {activeCar.viewsCount || activeCar.viewCount || 0}
                   </div>
                 </div>
               </div>
 
               <Link
                 to={`/owner-profile/${activeCar.userId}`}
-                className="
+                className={`
                   mt-5 flex items-center gap-3
-                  rounded-2xl bg-black
-                  p-3 text-white
+                  rounded-2xl p-3
                   shadow-lg
                   hover:-translate-y-1
                   transition
-                "
+                  ${
+                    isDarkmodeEnabled
+                      ? "bg-[#1f1f1f] text-white border border-white/10 hover:bg-[#292929]"
+                      : "bg-black text-white"
+                  }
+                `}
               >
                 <div
                   className="
@@ -555,9 +570,7 @@ const SearchPlate = () => {
                 >
                   {activeProfile?.profileImageUrl ? (
                     <img
-                      src={getFileUrl(
-                        activeProfile.profileImageUrl
-                      )}
+                      src={getFileUrl(activeProfile.profileImageUrl)}
                       alt={activeProfile.fullName}
                       className="h-full w-full object-cover"
                     />
@@ -576,11 +589,14 @@ const SearchPlate = () => {
 
                 <div className="min-w-0">
                   <div className="truncate font-black">
-                    {activeProfile?.fullName ||
-                      "Profil"}
+                    {activeProfile?.fullName || "Profil"}
                   </div>
 
-                  <div className="text-xs text-white/60">
+                  <div
+                    className={`text-xs ${
+                      isDarkmodeEnabled ? "text-yellow-400/70" : "text-white/60"
+                    }`}
+                  >
                     Profilə keç
                   </div>
                 </div>

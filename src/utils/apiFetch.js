@@ -4,23 +4,23 @@ import {
   setAccessToken,
   setRefreshToken,
   clearTokens,
-} from "./auth";
+} from "./auth"
 
-const BASE_URL = "https://localhost:52247";
+const BASE_URL = "https://localhost:52247"
 
-let isRefreshing = false;
-let refreshPromise = null;
+let isRefreshing = false
+let refreshPromise = null
 
 async function refreshAccessToken() {
-  const accessToken = getAccessToken();
-  const refreshToken = getRefreshToken();
+  const accessToken = getAccessToken()
+  const refreshToken = getRefreshToken()
 
   if (!refreshToken) {
-    clearTokens();
-    throw new Error("Refresh token tapılmadı");
+    clearTokens()
+    throw new Error("Refresh token tapılmadı")
   }
 
-  const response = await fetch(`${BASE_URL}/api/Auth/refresh-token`, {
+  const res = await fetch(`${BASE_URL}/api/Auth/refresh-token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -29,101 +29,83 @@ async function refreshAccessToken() {
       accessToken,
       refreshToken,
     }),
-  });
+  })
 
-  const data = await response.json().catch(() => null);
+  const data = await res.json().catch(() => null)
 
-  if (!response.ok) {
-    clearTokens();
-
-    throw new Error(
-      data?.message ||
-      data?.Message ||
-      "Refresh token yenilənmədi"
-    );
+  if (!res.ok) {
+    clearTokens()
+    throw new Error(data?.message || data?.Message || "Sessiya bitib")
   }
 
-  const newAccessToken = data?.accessToken || data?.token;
-  const newRefreshToken = data?.refreshToken;
+  const newAccessToken = data?.accessToken || data?.token || data?.data?.accessToken || data?.data?.token
+  const newRefreshToken = data?.refreshToken || data?.data?.refreshToken
 
   if (!newAccessToken) {
-    clearTokens();
-    throw new Error("Yeni access token gəlmədi");
+    clearTokens()
+    throw new Error("Yeni access token gəlmədi")
   }
 
-  setAccessToken(newAccessToken);
+  setAccessToken(newAccessToken)
 
   if (newRefreshToken) {
-    setRefreshToken(newRefreshToken);
+    setRefreshToken(newRefreshToken)
   }
 
-  return newAccessToken;
+  return newAccessToken
 }
 
 function buildHeaders(customHeaders = {}, hasBody = false, isFormData = false) {
-  const headers = {
-    ...customHeaders,
-  };
-
-  const accessToken = getAccessToken();
+  const headers = { ...customHeaders }
+  const accessToken = getAccessToken()
 
   if (!isFormData && hasBody && !headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
+    headers["Content-Type"] = "application/json"
   }
 
   if (accessToken && !headers.Authorization) {
-    headers.Authorization = `Bearer ${accessToken}`;
+    headers.Authorization = `Bearer ${accessToken}`
   }
 
-  return headers;
+  return headers
 }
 
 export async function apiFetch(url, options = {}, retry = true) {
-  const isFormData = options.body instanceof FormData;
-  const hasBody = !!options.body;
+  const isFormData = options.body instanceof FormData
+  const hasBody = !!options.body
 
-  let headers = buildHeaders(
-    options.headers,
-    hasBody,
-    isFormData
-  );
+  let headers = buildHeaders(options.headers, hasBody, isFormData)
 
-  let response = await fetch(`${BASE_URL}${url}`, {
+  let res = await fetch(`${BASE_URL}${url}`, {
     ...options,
     headers,
-  });
+  })
 
-  if (response.status === 401 && retry) {
+  if (res.status === 401 && retry) {
     try {
       if (!isRefreshing) {
-        isRefreshing = true;
-
+        isRefreshing = true
         refreshPromise = refreshAccessToken().finally(() => {
-          isRefreshing = false;
-        });
+          isRefreshing = false
+        })
       }
 
-      const newAccessToken = await refreshPromise;
+      const newAccessToken = await refreshPromise
 
       headers = {
-        ...buildHeaders(
-          options.headers,
-          hasBody,
-          isFormData
-        ),
+        ...buildHeaders(options.headers, hasBody, isFormData),
         Authorization: `Bearer ${newAccessToken}`,
-      };
+      }
 
-      response = await fetch(`${BASE_URL}${url}`, {
+      res = await fetch(`${BASE_URL}${url}`, {
         ...options,
         headers,
-      });
-    } catch (error) {
-      clearTokens();
-      window.location.href = "/login";
-      throw error;
+      })
+    } catch (err) {
+      clearTokens()
+      throw err
     }
   }
 
-  return response;
+  return res
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import Carcart from "../companents/Carcart";
@@ -37,6 +37,43 @@ const Homepage = () => {
 
     return !!token;
   };
+
+  const isVipCar = (car) => {
+    return Boolean(
+      car?.isVip ||
+        car?.isVIP ||
+        car?.vip ||
+        car?.isFeatured ||
+        car?.featured ||
+        car?.packageType === "VIP" ||
+        car?.packageName === "VIP" ||
+        car?.package?.name === "VIP" ||
+        car?.package?.type === "VIP"
+    );
+  };
+
+  const getViewCount = (car) => {
+    return Number(
+      car?.viewCount ??
+        car?.viewsCount ??
+        car?.views ??
+        car?.view ??
+        car?.baxisSayi ??
+        car?.baxishSayi ??
+        0
+    );
+  };
+
+  const sortedCars = useMemo(() => {
+    return [...cars].sort((a, b) => {
+      const vipA = isVipCar(a) ? 1 : 0;
+      const vipB = isVipCar(b) ? 1 : 0;
+
+      if (vipA !== vipB) return vipB - vipA;
+
+      return getViewCount(b) - getViewCount(a);
+    });
+  }, [cars]);
 
   const getCars = async () => {
     try {
@@ -176,19 +213,19 @@ const Homepage = () => {
           )}
         </div>
 
-        {cars.length === 0 ? (
+        {sortedCars.length === 0 ? (
           <div className="text-center py-16 text-gray-500 text-lg font-medium">
             Maşın tapılmadı
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-5 justify-items-center">
-            {cars.slice(0, visibleCount).map((car) => (
+            {sortedCars.slice(0, visibleCount).map((car) => (
               <Carcart key={car.id || car.carId} car={car} />
             ))}
           </div>
         )}
 
-        {visibleCount < cars.length && (
+        {visibleCount < sortedCars.length && (
           <div className="flex justify-center mt-8 sm:mt-10">
             <button
               onClick={handleLoadMore}

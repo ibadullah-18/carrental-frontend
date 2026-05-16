@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
+import { useDarkmode } from "../stores/useDarkmode"
 import {
   FaInstagram,
   FaTiktok,
@@ -15,6 +16,7 @@ const API_BASE = "https://localhost:52247"
 
 const OwnerProfile = () => {
   const { userId } = useParams()
+  const { isDarkmodeEnabled } = useDarkmode()
 
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -63,16 +65,36 @@ const OwnerProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <div className="text-lg animate-pulse">Profil yüklənir...</div>
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          isDarkmodeEnabled
+            ? "bg-[#070707] text-white"
+            : "bg-[#f4f4f4] text-black"
+        }`}
+      >
+        <div className="text-lg font-black animate-pulse">
+          Profil yüklənir...
+        </div>
       </div>
     )
   }
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
-        <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-5 py-4 rounded-2xl">
+      <div
+        className={`min-h-screen flex items-center justify-center px-4 ${
+          isDarkmodeEnabled
+            ? "bg-[#070707] text-white"
+            : "bg-[#f4f4f4] text-black"
+        }`}
+      >
+        <div
+          className={`px-5 py-4 rounded-2xl font-bold ${
+            isDarkmodeEnabled
+              ? "bg-red-500/10 border border-red-500/25 text-red-300"
+              : "bg-red-50 border border-red-200 text-red-600"
+          }`}
+        >
           {error || "Profil tapılmadı"}
         </div>
       </div>
@@ -80,37 +102,29 @@ const OwnerProfile = () => {
   }
 
   const socials = [
-    {
-      url: profile.instagramUrl,
-      icon: <FaInstagram />,
-      label: "Instagram",
-    },
-    {
-      url: profile.tikTokUrl,
-      icon: <FaTiktok />,
-      label: "TikTok",
-    },
-    {
-      url: profile.youTubeUrl,
-      icon: <FaYoutube />,
-      label: "YouTube",
-    },
-    {
-      url: profile.telegramUrl,
-      icon: <FaTelegramPlane />,
-      label: "Telegram",
-    },
-    {
-      url: profile.websiteUrl,
-      icon: <FaGlobe />,
-      label: "Website",
-    },
+    { url: profile.instagramUrl, icon: <FaInstagram />, label: "Instagram" },
+    { url: profile.tikTokUrl, icon: <FaTiktok />, label: "TikTok" },
+    { url: profile.youTubeUrl, icon: <FaYoutube />, label: "YouTube" },
+    { url: profile.telegramUrl, icon: <FaTelegramPlane />, label: "Telegram" },
+    { url: profile.websiteUrl, icon: <FaGlobe />, label: "Website" },
   ].filter((item) => item.url && item.url !== "string")
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white px-3 sm:px-6 py-6">
+    <div
+      className={`min-h-screen px-3 sm:px-6 py-6 ${
+        isDarkmodeEnabled
+          ? "bg-[#070707] text-[#f5f5f5]"
+          : "bg-[#f4f4f4] text-black"
+      }`}
+    >
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white/5 border border-white/10 rounded-[28px] p-4 sm:p-7 shadow-2xl">
+        <div
+          className={`rounded-[28px] p-4 sm:p-7 shadow-2xl ${
+            isDarkmodeEnabled
+              ? "bg-[#121212] border border-white/10 shadow-black/50"
+              : "bg-white border border-black/5 shadow-black/10"
+          }`}
+        >
           <div className="flex flex-col md:flex-row md:items-center gap-5">
             <button
               onClick={() => setIsImageOpen(true)}
@@ -128,13 +142,21 @@ const OwnerProfile = () => {
                 {profile.fullName}
               </h1>
 
-              <div className="mt-3 flex items-center justify-center md:justify-start gap-2 text-slate-300">
+              <div
+                className={`mt-3 flex items-center justify-center md:justify-start gap-2 ${
+                  isDarkmodeEnabled ? "text-white/65" : "text-gray-600"
+                }`}
+              >
                 <FaMapMarkerAlt className="text-yellow-400" />
                 <span>{profile.city || "Şəhər qeyd edilməyib"}</span>
               </div>
 
               {profile.bio && (
-                <p className="mt-4 text-slate-300 max-w-2xl leading-relaxed">
+                <p
+                  className={`mt-4 max-w-2xl leading-relaxed ${
+                    isDarkmodeEnabled ? "text-white/65" : "text-gray-600"
+                  }`}
+                >
                   {profile.bio}
                 </p>
               )}
@@ -148,7 +170,11 @@ const OwnerProfile = () => {
                       target="_blank"
                       rel="noreferrer"
                       title={item.label}
-                      className="w-11 h-11 rounded-full bg-white/10 hover:bg-yellow-400 hover:text-black border border-white/10 flex items-center justify-center text-xl transition-all duration-300 hover:scale-110"
+                      className={`w-11 h-11 rounded-full flex items-center justify-center text-xl transition-all duration-300 hover:scale-110 hover:bg-yellow-400 hover:text-black ${
+                        isDarkmodeEnabled
+                          ? "bg-[#1f1f1f] border border-white/10 text-white"
+                          : "bg-gray-100 border border-black/10 text-black"
+                      }`}
                     >
                       {item.icon}
                     </a>
@@ -157,7 +183,7 @@ const OwnerProfile = () => {
               )}
             </div>
 
-            <div className="bg-yellow-400 text-black rounded-2xl px-5 py-4 text-center min-w-[140px]">
+            <div className="bg-yellow-400 text-black rounded-2xl px-5 py-4 text-center min-w-[140px] shadow-lg shadow-yellow-500/20">
               <div className="flex items-center justify-center gap-2 text-lg font-black">
                 <FaCarSide />
                 {profile.cars?.length || 0}
@@ -178,9 +204,17 @@ const OwnerProfile = () => {
                 <Link
                   to={`/details/${car.id}`}
                   key={car.id}
-                  className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-yellow-400/80 transition-all duration-300 hover:-translate-y-1"
+                  className={`group rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-yellow-400/80 ${
+                    isDarkmodeEnabled
+                      ? "bg-[#121212] border border-white/10"
+                      : "bg-white border border-black/5 shadow-md shadow-black/5"
+                  }`}
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-800">
+                  <div
+                    className={`relative aspect-[4/3] overflow-hidden ${
+                      isDarkmodeEnabled ? "bg-[#1a1a1a]" : "bg-gray-100"
+                    }`}
+                  >
                     <img
                       src={getImageUrl(car.mainImageUrl)}
                       alt={`${car.brand} ${car.model}`}
@@ -199,13 +233,21 @@ const OwnerProfile = () => {
                       {car.brand} {car.model}
                     </h3>
 
-                    <div className="mt-2 text-xs sm:text-sm text-slate-300 space-y-1">
+                    <div
+                      className={`mt-2 text-xs sm:text-sm space-y-1 ${
+                        isDarkmodeEnabled ? "text-white/60" : "text-gray-600"
+                      }`}
+                    >
                       <p className="line-clamp-1">Rəng: {car.color}</p>
                       <p className="line-clamp-1">Şəhər: {car.city}</p>
                     </div>
 
                     {car.description && (
-                      <p className="mt-2 text-[11px] sm:text-sm text-slate-400 line-clamp-2">
+                      <p
+                        className={`mt-2 text-[11px] sm:text-sm line-clamp-2 ${
+                          isDarkmodeEnabled ? "text-white/40" : "text-gray-500"
+                        }`}
+                      >
                         {car.description}
                       </p>
                     )}
@@ -214,7 +256,13 @@ const OwnerProfile = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center text-slate-300">
+            <div
+              className={`rounded-2xl p-8 text-center font-semibold ${
+                isDarkmodeEnabled
+                  ? "bg-[#121212] border border-white/10 text-white/60"
+                  : "bg-white border border-black/5 text-gray-600"
+              }`}
+            >
               Bu istifadəçinin hələ maşını yoxdur.
             </div>
           )}
@@ -228,14 +276,14 @@ const OwnerProfile = () => {
         >
           <button
             onClick={() => setIsImageOpen(false)}
-            className="absolute top-5 right-5 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-3xl"
+            className="absolute top-5 right-5 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-3xl text-white"
           >
             <IoClose />
           </button>
 
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[260px] h-[260px] sm:w-[420px] sm:h-[420px] rounded-full overflow-hidden border-4 border-yellow-400 shadow-2xl shadow-yellow-500/30 bg-slate-900"
+            className="w-[260px] h-[260px] sm:w-[420px] sm:h-[420px] rounded-full overflow-hidden border-4 border-yellow-400 shadow-2xl shadow-yellow-500/30 bg-[#111]"
           >
             <img
               src={getImageUrl(profile.profileImageUrl)}
