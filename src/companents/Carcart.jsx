@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import defaultImage from "../assets/download.png";
+import { API_BASE_URL } from "../utils/config";
 
-const API_URL = "https://localhost:52247";
+
+const API_URL = API_BASE_URL;
 
 const Carcart = ({ car }) => {
   const { isDarkmodeEnabled } = useDarkmode();

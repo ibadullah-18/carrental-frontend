@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import { apiFetch } from "../utils/apiFetch";
+import { API_BASE_URLL } from "../utils/config";
 
-const API_BASE_URL = "https://localhost:52247";
+const API_BASE_URL = API_BASE_URLL;
 
 const normalizeArray = (data) => {
   if (Array.isArray(data)) return data;

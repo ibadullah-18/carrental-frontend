@@ -5,8 +5,9 @@ import { apiFetch } from "../utils/apiFetch";
 import { REGION_OPTIONS } from "../data/regions";
 import { CAR_BRANDS, COLOR_OPTIONS, YEAR_OPTIONS } from "../data/carOptions";
 import SmartSelect from "../companents/SmartSelect";
+import { API_BASE_URL } from "../utils/config";
 
-const API_BASE = "https://localhost:52247";
+const API_BASE = API_BASE_URL;
 
 const UpdateCar = () => {
   const { id } = useParams();

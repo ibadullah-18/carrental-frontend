@@ -4,8 +4,9 @@ import { useDarkmode } from "../stores/useDarkmode";
 import { apiFetch } from "../utils/apiFetch";
 import ConfirmModal from "../companents/ConfirmModal";
 import defaultImage from "../assets/download.png";
+import { API_BASE_URL } from "../utils/config";
 
-const API_BASE = "https://localhost:52247";
+const API_BASE = API_BASE_URL;
 
 const MyCars = () => {
   const navigate = useNavigate();

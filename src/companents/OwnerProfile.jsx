@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { useDarkmode } from "../stores/useDarkmode"
+import { API_BASE_URL } from "../utils/config";
 import {
   FaInstagram,
   FaTiktok,
@@ -12,7 +13,7 @@ import {
 } from "react-icons/fa"
 import { IoClose } from "react-icons/io5"
 
-const API_BASE = "https://localhost:52247"
+const API_BASE = API_BASE_URL;
 
 const OwnerProfile = () => {
   const { userId } = useParams()

@@ -5,8 +5,9 @@ import {
   setRefreshToken,
   clearTokens,
 } from "./auth"
+import { API_BASE_URL } from "../utils/config";
 
-const BASE_URL = "https://localhost:52247"
+const BASE_URL = API_BASE_URL;
 
 let isRefreshing = false
 let refreshPromise = null

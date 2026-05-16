@@ -18,8 +18,9 @@ import {
 import { useDarkmode } from "../stores/useDarkmode"
 import { apiFetch } from "../utils/apiFetch"
 import { getAccessToken, parseJwt } from "../utils/auth"
+import { API_BASE_URL } from "../utils/config";
 
-const BASE_URL = "https://localhost:52247"
+const BASE_URL = API_BASE_URL;
 
 const Profile = () => {
   const { isDarkmodeEnabled } = useDarkmode()
