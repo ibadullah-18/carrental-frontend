@@ -10,7 +10,7 @@ const Carcart = ({ car }) => {
   const image = car?.mainImageUrl
     ? car.mainImageUrl.startsWith("http")
       ? car.mainImageUrl
-      : `http://localhost:8081${car.mainImageUrl}`
+      : `http://13.36.176.206:8081${car.mainImageUrl}`
     : defaultImage;
 
   const brand = car?.brand || "Marka";
