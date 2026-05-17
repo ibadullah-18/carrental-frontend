@@ -168,7 +168,7 @@ const Details = () => {
 
   const makeUrl = (path) => {
     if (!path) return ""
-    return path.startsWith("http") ? path : `http://localhost:8081${path}`
+    return path.startsWith("http") ? path : `http://13.36.176.206:8081${path}`
   }
 
   useEffect(() => {
