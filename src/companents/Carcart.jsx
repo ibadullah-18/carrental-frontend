@@ -2,22 +2,26 @@ import { Link } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import defaultImage from "../assets/download.png";
 
-
 const Carcart = ({ car }) => {
   const { isDarkmodeEnabled } = useDarkmode();
 
   const carId = car?.id || car?.carId;
 
   const image = car?.mainImageUrl
-  ? car.mainImageUrl.startsWith("http")
-    ? car.mainImageUrl
-    : `http://localhost:8081${car.mainImageUrl}`
-  : defaultImage;
+    ? car.mainImageUrl.startsWith("http")
+      ? car.mainImageUrl
+      : `http://localhost:8081${car.mainImageUrl}`
+    : defaultImage;
 
   const brand = car?.brand || "Marka";
   const model = car?.model || "Model";
   const city = car?.city || car?.location || "Şəhər qeyd olunmayıb";
   const viewCount = car?.viewCount || 0;
+
+  const plateNumber = (car?.plateNumber || "—")
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(/^(\d{2})([A-Z]{2})(\d{3})$/, "$1 $2 $3");
 
   return (
     <Link
@@ -96,88 +100,85 @@ const Carcart = ({ car }) => {
         </div>
       </div>
 
-<div className="relative p-3 sm:p-4 lg:p-5">
-  {/* NOMRE + IL */}
-  <div
-    className={`
-      flex items-center justify-between
-      rounded-2xl px-4 py-3
-      border
-      ${
-        isDarkmodeEnabled
-          ? "bg-[#171717] border-[#2a2a2a]"
-          : "bg-[#f7f7f7] border-[#ececec]"
-      }
-    `}
-  >
-    <div>
-      <p
-        className={`text-[10px] sm:text-xs uppercase tracking-wider ${
-          isDarkmodeEnabled ? "text-gray-500" : "text-gray-400"
-        }`}
-      >
-        Dövlət nömrəsi
-      </p>
+      <div className="relative p-3 sm:p-4 lg:p-5">
+        <div
+          className={`
+            flex items-center justify-between
+            rounded-2xl px-3 sm:px-4 py-3
+            border
+            ${
+              isDarkmodeEnabled
+                ? "bg-[#171717] border-[#2a2a2a]"
+                : "bg-[#f7f7f7] border-[#ececec]"
+            }
+          `}
+        >
+          <div className="min-w-0 flex-1">
+            <p
+              className={`text-[10px] sm:text-xs uppercase tracking-wider ${
+                isDarkmodeEnabled ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              Dövlət nömrəsi
+            </p>
 
-      <h2 className="text-[16px] sm:text-[20px] lg:text-[22px] font-black tracking-[3px] mt-1">
-  {(car?.plateNumber || "—")
-    .replace(/^(\d{2})([A-Z]{2})(\d{3})$/, "$1 $2 $3")}
-</h2>
-    </div>
+            <h2 className="text-[14px] xs:text-[15px] sm:text-[20px] lg:text-[22px] font-black tracking-[1.8px] sm:tracking-[3px] mt-1 whitespace-nowrap overflow-hidden">
+              {plateNumber}
+            </h2>
+          </div>
 
-    <div className="text-right">
-      <p
-        className={`text-[10px] sm:text-xs uppercase tracking-wider ${
-          isDarkmodeEnabled ? "text-gray-500" : "text-gray-400"
-        }`}
-      >
-        İl
-      </p>
+          <div className="hidden sm:block text-right shrink-0 ml-3">
+            <p
+              className={`text-xs uppercase tracking-wider ${
+                isDarkmodeEnabled ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              İl
+            </p>
 
-      <h3 className="text-[15px] sm:text-[18px] font-bold mt-1 text-red-500">
-        {car?.year || "—"}
-      </h3>
-    </div>
-  </div>
+            <h3 className="text-[18px] font-bold mt-1 text-red-500">
+              {car?.year || "—"}
+            </h3>
+          </div>
+        </div>
 
-  {/* ALT HISSE */}
-  <div
-    className={`
-      mt-4 flex items-center justify-between
-      border-t pt-3
-      ${isDarkmodeEnabled ? "border-[#2a2a2a]" : "border-[#eeeeee]"}
-    `}
-  >
-    <div>
-      <p
-        className={`text-[11px] sm:text-xs ${
-          isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
-        }`}
-      >
-        Platformada göstərilir
-      </p>
+        <div
+          className={`
+            mt-4 flex items-center justify-between
+            border-t pt-3
+            ${isDarkmodeEnabled ? "border-[#2a2a2a]" : "border-[#eeeeee]"}
+          `}
+        >
+          <div>
+            <p
+              className={`text-[11px] sm:text-xs ${
+                isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              Platformada göstərilir
+            </p>
 
-      <p className="text-[13px] sm:text-[15px] font-bold text-red-500">
-        Ətraflı bax
-      </p>
-    </div>
+            <p className="text-[13px] sm:text-[15px] font-bold text-red-500">
+              Ətraflı bax
+            </p>
+          </div>
 
-    <div className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center transition duration-300 group-hover:translate-x-1 group-hover:scale-105">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="w-4 h-4"
-      >
-        <path
-          fillRule="evenodd"
-          d="M16.28 11.47a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L14.69 12 9.97 7.28a.75.75 0 111.06-1.06l5.25 5.25z"
-          clipRule="evenodd"
-        />
-      </svg>
-    </div>
-  </div>
-</div>
+          <div className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center transition duration-300 group-hover:translate-x-1 group-hover:scale-105">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="w-4 h-4"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.28 11.47a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06L14.69 12 9.97 7.28a.75.75 0 111.06-1.06l5.25 5.25z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
     </Link>
   );
 };

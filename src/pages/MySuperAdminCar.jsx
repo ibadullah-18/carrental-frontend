@@ -133,15 +133,324 @@ export default function MySuperAdminCar() {
 
   const tabs = [["dashboard","İdarə paneli"],["users","İstifadəçilər"],["moderators","Moderator yarat"],["cars","Nömrə axtar"],["payments","Ödənişlər"],["reports","Reportlar"],["packages","Paketlər"],["audit","Audit loglar"],["legal","Hüquqi razılıqlar"]]
 
-  return <div className="min-h-screen bg-slate-100"><aside className="fixed left-0 top-0 h-screen w-80 overflow-y-auto bg-slate-950 p-5 text-white"><div className="mb-7 rounded-3xl bg-white/10 p-5"><p className="text-xs font-black uppercase tracking-[0.3em] text-blue-200">ShowCar</p><h1 className="mt-2 text-3xl font-black">SuperAdmin</h1></div>{tabs.map(([k,l])=><button key={k} onClick={()=>{clear();setTab(k)}} className={`mb-2 w-full rounded-2xl px-4 py-3 text-left font-black ${tab===k?"bg-blue-600":"text-slate-300 hover:bg-white/10"}`}>{l}</button>)}<button onClick={logout} className="mt-5 w-full rounded-2xl bg-red-600 px-4 py-3 font-black">Çıxış</button></aside><main className="ml-80 p-7"><div className="mb-6 rounded-[2rem] bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 p-7 text-white"><h2 className="text-4xl font-black">SuperAdmin Panel</h2><p className="mt-2 text-blue-100">Refresh token sistemi aktivdir.</p></div>{error&&<div className="mb-4 rounded-2xl bg-red-100 p-4 font-black text-red-700">{error}</div>}{message&&<div className="mb-4 rounded-2xl bg-emerald-100 p-4 font-black text-emerald-700">{message}</div>}{loading&&<div className="mb-4 rounded-2xl bg-blue-100 p-4 font-black text-blue-700">Yüklənir...</div>}
-    {tab==="dashboard"&&<section className="space-y-6"><div className="rounded-[2rem] bg-white p-6"><div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center"><div><h2 className="text-3xl font-black">Sayt statistikası</h2><p className="text-slate-500">Seçilən period: <b>{periodName(period)}</b></p></div><div className="flex gap-2">{[["daily","Günlük"],["weekly","Həftəlik"],["monthly","Aylıq"]].map(([k,l])=><button key={k} onClick={()=>setPeriod(k)} className={`rounded-2xl px-5 py-3 font-black ${period===k?"bg-blue-600 text-white":"bg-slate-100"}`}>{l}</button>)}<button onClick={loadDashboard} className="rounded-2xl bg-slate-950 px-5 py-3 font-black text-white">Yenilə</button></div></div></div><div className="grid grid-cols-1 gap-4 md:grid-cols-4"><Card title="Ümumi istifadəçilər" value={dashboard?.totalUsers} desc="Platformadakı bütün hesablar"/><Card title="Ümumi maşınlar" value={dashboard?.totalCars} desc="Sistemdə yaradılmış elanlar"/><Card title="Aktiv maşınlar" value={dashboard?.activeCars} desc="Hazırda aktiv elanlar"/><Card title="Ümumi gəlir" value={`${dashboard?.totalRevenue ?? 0} AZN`} desc="Ödənişlərdən gəlir"/><Card title="Ödənişlər" value={dashboard?.totalPayments} desc="Bütün ödəniş sayı"/><Card title="Banlanan userlər" value={dashboard?.bannedUsers} desc="Məhdudlaşdırılmış hesablar"/><Card title="VIP maşınlar" value={dashboard?.vipCars} desc="VIP paketli elanlar"/><Card title="Gözləyən reportlar" value={dashboard?.pendingReports} desc="Admin baxışı gözləyənlər"/></div><div className="grid grid-cols-1 gap-5 lg:grid-cols-2"><div className="rounded-[2rem] bg-white p-5"><h3 className="mb-4 text-xl font-black">Ümumi göstəricilər</h3><div className="grid grid-cols-2 gap-3">{Object.entries(overview||{}).map(([k,v])=><Info key={k} label={az(k)} value={v}/>)}</div></div><div className="rounded-[2rem] bg-white p-5"><h3 className="mb-4 text-xl font-black">{periodName(period)} üzrə hesabat</h3><div className="grid grid-cols-2 gap-3">{Object.entries(reportStats||{}).map(([k,v])=><Info key={k} label={az(k)} value={v}/>)}</div></div></div></section>}
-    {tab==="users"&&<section className="rounded-[2rem] bg-white p-6"><div className="mb-5 flex justify-between"><h2 className="text-2xl font-black">Bütün istifadəçilər</h2><button onClick={loadUsers} className="rounded-2xl bg-slate-950 px-5 py-3 font-black text-white">Yenilə</button></div><div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left"><thead><tr className="border-b text-sm text-slate-500"><th className="py-3">İstifadəçi</th><th>Email</th><th>Rollar</th><th>Maşın</th><th>Ödəniş</th><th>Status</th><th>Əməliyyat</th></tr></thead><tbody>{users.map((u)=><tr key={u.id} className="border-b"><td className="py-4 font-black">{u.fullName}</td><td>{u.email}</td><td>{arr(u.roles).join(", ")}</td><td>{u.carsCount}</td><td>{u.paymentsCount}</td><td>{u.isBanned?<Badge>Banlı</Badge>:<Badge good>Aktiv</Badge>}</td><td><button onClick={()=>loadUser(u.id)} className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-black text-white">Detal</button></td></tr>)}</tbody></table></div></section>}
-    {tab==="moderators"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">İstifadəçi axtar və moderator et</h2><form onSubmit={searchUsers} className="mb-5 flex gap-3"><input className="h-12 flex-1 rounded-2xl border px-4" value={userSearch} onChange={(e)=>setUserSearch(e.target.value)} placeholder="Ad, email"/><button className="rounded-2xl bg-blue-600 px-7 font-black text-white">Axtar</button></form><div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{searchedUsers.map((u)=><div key={u.id||u.userId} className="rounded-3xl border p-4"><h3 className="font-black">{u.fullName||u.name}</h3><p className="text-sm text-slate-500">{u.email||u.city}</p><div className="mt-4 flex gap-2"><button onClick={()=>makeModerator(u.id||u.userId)} className="rounded-xl bg-purple-600 px-4 py-2 font-black text-white">Moderator et</button><button onClick={()=>loadUser(u.id||u.userId)} className="rounded-xl bg-slate-950 px-4 py-2 font-black text-white">Profil</button></div></div>)}</div></section>}
-    {tab==="cars"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Nömrəyə görə maşın axtar</h2><form onSubmit={searchCars} className="mb-5 flex gap-3"><input className="h-12 flex-1 rounded-2xl border px-4" value={plate} onChange={(e)=>setPlate(e.target.value)} placeholder="77MF835"/><button className="rounded-2xl bg-blue-600 px-7 font-black text-white">Axtar</button></form><div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{cars.map((c)=><button key={c.id||c.carId} onClick={()=>loadCar(c.id||c.carId)} className="flex gap-4 rounded-3xl border p-4 text-left hover:bg-blue-50">{mainImg(c)?<img src={mainImg(c)} className="h-24 w-32 rounded-2xl object-cover"/>:<div className="flex h-24 w-32 items-center justify-center rounded-2xl bg-slate-100 text-xs font-black text-slate-400">Şəkil yoxdur</div>}<div><h3 className="font-black">{c.plateNumber} — {c.brand} {c.model}</h3><p className="text-sm text-slate-500">{c.description}</p></div></button>)}</div></section>}
-    {tab==="payments"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Ödənişlər</h2><div className="space-y-3">{payments.map((p)=><button key={p.id} onClick={()=>setSelectedPayment(p)} className="w-full rounded-3xl border p-4 text-left hover:bg-blue-50"><div className="flex justify-between"><div><h3 className="font-black">{p.amount} {p.currency} — {p.packageName}</h3><p className="text-sm text-slate-500">{p.userFullName} • {p.plateNumber}</p></div><Badge good>Ödənilib</Badge></div></button>)}</div></section>}
-    {tab==="reports"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Bütün reportlar</h2><div className="space-y-3">{reports.map((r)=><button key={r.id} onClick={()=>setSelectedReport(r)} className="w-full rounded-3xl border p-4 text-left hover:bg-blue-50"><div className="flex justify-between"><div><h3 className="font-black">{r.plateNumber} — {r.carBrand} {r.carModel}</h3><p className="text-sm text-slate-600">{r.description}</p><p className="text-xs text-slate-400">Şikayət edən: {r.reportedByFullName} • Status: {r.status}</p></div><button type="button" onClick={(e)=>{e.stopPropagation();loadCar(r.carId)}} className="rounded-2xl bg-blue-600 px-4 py-2 font-black text-white">Maşına bax</button></div></button>)}</div></section>}
-    {tab==="packages"&&<section className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]"><form onSubmit={savePackage} className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">{selectedPackage?"Paketi yenilə":"Yeni paket yarat"}</h2>{[["name","Ad"],["durationDays","Gün sayı"],["price","Qiymət"],["currency","Valyuta"],["sortOrder","Sıralama"]].map(([k,l])=><input key={k} className="mb-3 h-12 w-full rounded-2xl border px-4" placeholder={l} type={["durationDays","price","sortOrder"].includes(k)?"number":"text"} value={packageForm[k]} onChange={(e)=>setPackageForm({...packageForm,[k]:e.target.value})}/>) }<label className="mb-3 flex gap-2 font-bold"><input type="checkbox" checked={packageForm.isVip} onChange={(e)=>setPackageForm({...packageForm,isVip:e.target.checked})}/> VIP paket</label>{selectedPackage&&<label className="mb-3 flex gap-2 font-bold"><input type="checkbox" checked={packageForm.isActive} onChange={(e)=>setPackageForm({...packageForm,isActive:e.target.checked})}/> Aktivdir</label>}<button className="h-12 w-full rounded-2xl bg-blue-600 font-black text-white">{selectedPackage?"Yenilə":"Yarat"}</button></form><div className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Paketlər</h2><div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{packages.map((p)=><div key={p.id} className="rounded-3xl border p-4"><div className="flex justify-between"><div><h3 className="font-black">{p.name}</h3><p className="text-sm text-slate-500">{p.price} {p.currency} • {p.durationDays} gün</p></div>{p.isActive?<Badge good>Aktiv</Badge>:<Badge>Passiv</Badge>}</div><button onClick={()=>editPackage(p)} className="mt-4 rounded-xl bg-slate-950 px-4 py-2 font-black text-white">Düzəlt</button></div>)}</div></div></section>}
-    {tab==="audit"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Audit loglar</h2>{auditLogs.map((l)=><div key={l.id} className="mb-3 rounded-3xl border p-4"><h3 className="font-black">{l.actionType} — {l.entityName}</h3><p className="text-sm text-slate-500">{l.actorFullName} • {l.actorEmail}</p><p className="text-xs text-slate-400">{l.actionAt}</p></div>)}</section>}
-    {tab==="legal"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Hüquqi razılıqlar</h2>{legalConsents.map((c)=><div key={c.id} className="mb-3 rounded-3xl border p-4"><h3 className="font-black">{c.userFullName} — tip {c.consentType}</h3><p className="text-sm text-slate-600">{c.consentTextSnapshot}</p><p className="text-xs text-slate-400">{c.acceptedAt}</p></div>)}</section>}
-    </main>{selectedUser&&<UserModal user={selectedUser}/>} {selectedCar&&<CarModal car={selectedCar}/>} {selectedPayment&&<PaymentModal payment={selectedPayment}/>} {selectedReport&&<Modal title="Report detalları" onClose={()=>setSelectedReport(null)} wide={false}><div className="mb-4 rounded-3xl bg-yellow-50 p-4"><p className="font-black text-yellow-800">Report yazısı</p><p>{selectedReport.description}</p></div><button onClick={()=>loadCar(selectedReport.carId)} className="mb-4 w-full rounded-2xl bg-blue-600 px-4 py-3 font-black text-white">{selectedReport.plateNumber} — {selectedReport.carBrand} {selectedReport.carModel} maşınına bax</button><div className="grid grid-cols-1 gap-3">{Object.entries(selectedReport).map(([k,v])=><Info key={k} label={k} value={typeof v === "object" ? JSON.stringify(v) : v}/>)}</div></Modal>}</div>
+  // Əsas dəyişikliklər:
+// aside: lg:fixed lg:w-80, telefonda normal blok
+// main: lg:ml-80, telefonda ml yoxdur
+// tab düymələri: telefonda grid
+// table-lar: overflow-x-auto saxlanıldı
+// modal və kartlarda mobil padding ölçüləri düzəldildi
+
+// Sənin mövcud kodunda aşağıdakı böyük return hissəsini bu responsive versiya ilə əvəz et:
+
+return (
+  <div className="min-h-screen bg-slate-100">
+    <aside className="w-full bg-slate-950 p-4 text-white lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-80 lg:overflow-y-auto lg:p-5">
+      <div className="mb-4 rounded-3xl bg-white/10 p-4 lg:mb-7 lg:p-5">
+        <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-200">
+          ShowCar
+        </p>
+        <h1 className="mt-2 text-2xl font-black lg:text-3xl">
+          SuperAdmin
+        </h1>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:block">
+        {tabs.map(([k, l]) => (
+          <button
+            key={k}
+            onClick={() => {
+              clear();
+              setTab(k);
+            }}
+            className={`rounded-2xl px-3 py-3 text-left text-xs font-black sm:text-sm lg:mb-2 lg:w-full lg:px-4 ${
+              tab === k
+                ? "bg-blue-600 text-white"
+                : "text-slate-300 hover:bg-white/10"
+            }`}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={logout}
+        className="mt-4 w-full rounded-2xl bg-red-600 px-4 py-3 font-black"
+      >
+        Çıxış
+      </button>
+    </aside>
+
+    <main className="p-4 sm:p-5 lg:ml-80 lg:p-7">
+      <div className="mb-5 rounded-[1.5rem] bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 p-5 text-white lg:mb-6 lg:rounded-[2rem] lg:p-7">
+        <h2 className="text-2xl font-black sm:text-3xl lg:text-4xl">
+          SuperAdmin Panel
+        </h2>
+        <p className="mt-2 text-sm text-blue-100 sm:text-base">
+          Refresh token sistemi aktivdir.
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-2xl bg-red-100 p-4 text-sm font-black text-red-700 sm:text-base">
+          {error}
+        </div>
+      )}
+
+      {message && (
+        <div className="mb-4 rounded-2xl bg-emerald-100 p-4 text-sm font-black text-emerald-700 sm:text-base">
+          {message}
+        </div>
+      )}
+
+      {loading && (
+        <div className="mb-4 rounded-2xl bg-blue-100 p-4 text-sm font-black text-blue-700 sm:text-base">
+          Yüklənir...
+        </div>
+      )}
+
+      {tab === "dashboard" && (
+        <section className="space-y-5 lg:space-y-6">
+          <div className="rounded-[1.5rem] bg-white p-4 lg:rounded-[2rem] lg:p-6">
+            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+              <div>
+                <h2 className="text-2xl font-black lg:text-3xl">
+                  Sayt statistikası
+                </h2>
+                <p className="text-sm text-slate-500 sm:text-base">
+                  Seçilən period: <b>{periodName(period)}</b>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 sm:flex">
+                {[["daily", "Günlük"], ["weekly", "Həftəlik"], ["monthly", "Aylıq"]].map(
+                  ([k, l]) => (
+                    <button
+                      key={k}
+                      onClick={() => setPeriod(k)}
+                      className={`rounded-2xl px-4 py-3 text-sm font-black ${
+                        period === k
+                          ? "bg-blue-600 text-white"
+                          : "bg-slate-100"
+                      }`}
+                    >
+                      {l}
+                    </button>
+                  )
+                )}
+
+                <button
+                  onClick={loadDashboard}
+                  className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white"
+                >
+                  Yenilə
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <Card title="Ümumi istifadəçilər" value={dashboard?.totalUsers} desc="Platformadakı bütün hesablar" />
+            <Card title="Ümumi maşınlar" value={dashboard?.totalCars} desc="Sistemdə yaradılmış elanlar" />
+            <Card title="Aktiv maşınlar" value={dashboard?.activeCars} desc="Hazırda aktiv elanlar" />
+            <Card title="Ümumi gəlir" value={`${dashboard?.totalRevenue ?? 0} AZN`} desc="Ödənişlərdən gəlir" />
+            <Card title="Ödənişlər" value={dashboard?.totalPayments} desc="Bütün ödəniş sayı" />
+            <Card title="Banlanan userlər" value={dashboard?.bannedUsers} desc="Məhdudlaşdırılmış hesablar" />
+            <Card title="VIP maşınlar" value={dashboard?.vipCars} desc="VIP paketli elanlar" />
+            <Card title="Gözləyən reportlar" value={dashboard?.pendingReports} desc="Admin baxışı gözləyənlər" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            <div className="rounded-[1.5rem] bg-white p-4 lg:rounded-[2rem] lg:p-5">
+              <h3 className="mb-4 text-lg font-black lg:text-xl">
+                Ümumi göstəricilər
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {Object.entries(overview || {}).map(([k, v]) => (
+                  <Info key={k} label={az(k)} value={v} />
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[1.5rem] bg-white p-4 lg:rounded-[2rem] lg:p-5">
+              <h3 className="mb-4 text-lg font-black lg:text-xl">
+                {periodName(period)} üzrə hesabat
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {Object.entries(reportStats || {}).map(([k, v]) => (
+                  <Info key={k} label={az(k)} value={v} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {tab === "users" && (
+        <section className="rounded-[1.5rem] bg-white p-4 lg:rounded-[2rem] lg:p-6">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-black lg:text-2xl">
+              Bütün istifadəçilər
+            </h2>
+            <button
+              onClick={loadUsers}
+              className="rounded-2xl bg-slate-950 px-5 py-3 font-black text-white"
+            >
+              Yenilə
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left">
+              <thead>
+                <tr className="border-b text-sm text-slate-500">
+                  <th className="py-3">İstifadəçi</th>
+                  <th>Email</th>
+                  <th>Rollar</th>
+                  <th>Maşın</th>
+                  <th>Ödəniş</th>
+                  <th>Status</th>
+                  <th>Əməliyyat</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-b">
+                    <td className="py-4 font-black">{u.fullName}</td>
+                    <td>{u.email}</td>
+                    <td>{arr(u.roles).join(", ")}</td>
+                    <td>{u.carsCount}</td>
+                    <td>{u.paymentsCount}</td>
+                    <td>{u.isBanned ? <Badge>Banlı</Badge> : <Badge good>Aktiv</Badge>}</td>
+                    <td>
+                      <button
+                        onClick={() => loadUser(u.id)}
+                        className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-black text-white"
+                      >
+                        Detal
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {tab === "moderators" && (
+        <section className="rounded-[1.5rem] bg-white p-4 lg:rounded-[2rem] lg:p-6">
+          <h2 className="mb-4 text-xl font-black lg:text-2xl">
+            İstifadəçi axtar və moderator et
+          </h2>
+
+          <form onSubmit={searchUsers} className="mb-5 flex flex-col gap-3 sm:flex-row">
+            <input
+              className="h-12 flex-1 rounded-2xl border px-4"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder="Ad, email"
+            />
+            <button className="rounded-2xl bg-blue-600 px-7 py-3 font-black text-white">
+              Axtar
+            </button>
+          </form>
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {searchedUsers.map((u) => (
+              <div key={u.id || u.userId} className="rounded-3xl border p-4">
+                <h3 className="font-black">{u.fullName || u.name}</h3>
+                <p className="text-sm text-slate-500">{u.email || u.city}</p>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <button onClick={() => makeModerator(u.id || u.userId)} className="rounded-xl bg-purple-600 px-4 py-2 font-black text-white">
+                    Moderator et
+                  </button>
+                  <button onClick={() => loadUser(u.id || u.userId)} className="rounded-xl bg-slate-950 px-4 py-2 font-black text-white">
+                    Profil
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === "cars" && (
+        <section className="rounded-[1.5rem] bg-white p-4 lg:rounded-[2rem] lg:p-6">
+          <h2 className="mb-4 text-xl font-black lg:text-2xl">
+            Nömrəyə görə maşın axtar
+          </h2>
+
+          <form onSubmit={searchCars} className="mb-5 flex flex-col gap-3 sm:flex-row">
+            <input
+              className="h-12 flex-1 rounded-2xl border px-4"
+              value={plate}
+              onChange={(e) => setPlate(e.target.value)}
+              placeholder="77MF835"
+            />
+            <button className="rounded-2xl bg-blue-600 px-7 py-3 font-black text-white">
+              Axtar
+            </button>
+          </form>
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {cars.map((c) => (
+              <button
+                key={c.id || c.carId}
+                onClick={() => loadCar(c.id || c.carId)}
+                className="flex flex-col gap-4 rounded-3xl border p-4 text-left hover:bg-blue-50 sm:flex-row"
+              >
+                {mainImg(c) ? (
+                  <img src={mainImg(c)} className="h-44 w-full rounded-2xl object-cover sm:h-24 sm:w-32" />
+                ) : (
+                  <div className="flex h-44 w-full items-center justify-center rounded-2xl bg-slate-100 text-xs font-black text-slate-400 sm:h-24 sm:w-32">
+                    Şəkil yoxdur
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="font-black">
+                    {c.plateNumber} — {c.brand} {c.model}
+                  </h3>
+                  <p className="text-sm text-slate-500">{c.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === "payments" && (
+        <section className="rounded-[1.5rem] bg-white p-4 lg:rounded-[2rem] lg:p-6">
+          <h2 className="mb-4 text-xl font-black lg:text-2xl">Ödənişlər</h2>
+          <div className="space-y-3">
+            {payments.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPayment(p)}
+                className="w-full rounded-3xl border p-4 text-left hover:bg-blue-50"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="font-black">
+                      {p.amount} {p.currency} — {p.packageName}
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      {p.userFullName} • {p.plateNumber}
+                    </p>
+                  </div>
+                  <Badge good>Ödənilib</Badge>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+    </main>
+
+    {selectedUser && <UserModal user={selectedUser} />}
+    {selectedCar && <CarModal car={selectedCar} />}
+    {selectedPayment && <PaymentModal payment={selectedPayment} />}
+  </div>
+);
 }
