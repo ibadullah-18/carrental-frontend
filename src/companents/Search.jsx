@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useDarkmode } from "../stores/useDarkmode"
 import { useSearchStore } from "../stores/search"
-import { apiFetch } from "../utils/apiFetch"
+import { apiFetch, getFileUrl } from "../utils/apiFetch"
 import Carcart from "../companents/Carcart"
 
 const Search = () => {
@@ -14,22 +14,16 @@ const Search = () => {
 
   const [cars, setCars] = useState([])
   const [users, setUsers] = useState([])
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [visibleCount, setVisibleCount] = useState(6)
   const [debouncedSearch, setDebouncedSearch] = useState(search || queryFromUrl)
   const [isPageVisible, setIsPageVisible] = useState(false)
   const [isResultsVisible, setIsResultsVisible] = useState(true)
-
-  // cars | users
   const [searchType, setSearchType] = useState("cars")
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsPageVisible(true)
-    }, 80)
-
+    const timer = setTimeout(() => setIsPageVisible(true), 80)
     return () => clearTimeout(timer)
   }, [])
 
@@ -40,10 +34,7 @@ const Search = () => {
   }, [queryFromUrl, search, setSearch])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search)
-    }, 300)
-
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(timer)
   }, [search])
 
@@ -61,32 +52,21 @@ const Search = () => {
           setCars([])
           setUsers([])
           setLoading(false)
-
-          setTimeout(() => {
-            setIsResultsVisible(true)
-          }, 80)
-
+          setTimeout(() => setIsResultsVisible(true), 80)
           return
         }
 
-        let response
-
-        // CAR SEARCH
         if (searchType === "cars") {
-          response = await apiFetch(
+          const response = await apiFetch(
             `/api/Cars/search-by-model?query=${encodeURIComponent(trimmed)}`,
-            {
-              method: "GET",
-            }
+            { method: "GET" }
           )
 
           const data = await response.json().catch(() => null)
 
           if (!response.ok) {
             throw new Error(
-              data?.message ||
-                data?.Message ||
-                "Maşınlar yüklənə bilmədi."
+              data?.message || data?.Message || "Maşınlar yüklənə bilmədi."
             )
           }
 
@@ -94,22 +74,17 @@ const Search = () => {
           setUsers([])
         }
 
-        // USER SEARCH
         if (searchType === "users") {
-          response = await apiFetch(
+          const response = await apiFetch(
             `/api/Users/search?query=${encodeURIComponent(trimmed)}`,
-            {
-              method: "GET",
-            }
+            { method: "GET" }
           )
 
           const data = await response.json().catch(() => null)
 
           if (!response.ok) {
             throw new Error(
-              data?.message ||
-                data?.Message ||
-                "İstifadəçilər yüklənə bilmədi."
+              data?.message || data?.Message || "İstifadəçilər yüklənə bilmədi."
             )
           }
 
@@ -117,15 +92,10 @@ const Search = () => {
           setCars([])
         }
 
-        setTimeout(() => {
-          setIsResultsVisible(true)
-        }, 120)
+        setTimeout(() => setIsResultsVisible(true), 120)
       } catch (err) {
         setError(err.message || "Axtarış zamanı xəta baş verdi.")
-
-        setTimeout(() => {
-          setIsResultsVisible(true)
-        }, 120)
+        setTimeout(() => setIsResultsVisible(true), 120)
       } finally {
         setLoading(false)
       }
@@ -140,9 +110,7 @@ const Search = () => {
     <div
       className={`min-h-screen pt-[95px] pb-12 px-3 sm:px-5 lg:px-8 transition-all duration-500 ${
         isPageVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-      } ${
-        isDarkmodeEnabled ? "bg-[#111111] text-white" : "bg-[#f8f8f8] text-black"
-      }`}
+      } ${isDarkmodeEnabled ? "bg-[#111111] text-white" : "bg-[#f8f8f8] text-black"}`}
     >
       <div className="max-w-[1280px] mx-auto">
         <div
@@ -159,12 +127,9 @@ const Search = () => {
               isDarkmodeEnabled ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            {search.trim()
-              ? `"${search}" üçün nəticələr`
-              : "Axtarış üçün yazın."}
+            {search.trim() ? `"${search}" üçün nəticələr` : "Axtarış üçün yazın."}
           </p>
 
-          {/* SEARCH TYPE BUTTONS */}
           <div className="flex items-center gap-3 mt-5">
             <button
               onClick={() => setSearchType("cars")}
@@ -195,19 +160,10 @@ const Search = () => {
         </div>
 
         {loading && search.trim() ? (
-          <div
-            className={`py-10 transition-all duration-300 ${
-              isResultsVisible ? "opacity-100" : "opacity-60"
-            }`}
-          >
+          <div className={`py-10 transition-all duration-300 ${isResultsVisible ? "opacity-100" : "opacity-60"}`}>
             <div className="flex justify-center items-center gap-3">
               <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse"></div>
-
-              <div
-                className={`text-sm sm:text-base font-medium ${
-                  isDarkmodeEnabled ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <div className={`text-sm sm:text-base font-medium ${isDarkmodeEnabled ? "text-gray-300" : "text-gray-700"}`}>
                 Axtarılır...
               </div>
             </div>
@@ -215,9 +171,7 @@ const Search = () => {
         ) : error ? (
           <div
             className={`rounded-2xl border px-4 py-6 text-center transition-all duration-500 ${
-              isResultsVisible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-3"
+              isResultsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
             } ${
               isDarkmodeEnabled
                 ? "bg-[#1a1a1a] border-red-500/30 text-red-300"
@@ -229,9 +183,7 @@ const Search = () => {
         ) : !search.trim() ? (
           <div
             className={`rounded-2xl border px-4 py-10 text-center transition-all duration-500 ${
-              isResultsVisible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-3"
+              isResultsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
             } ${
               isDarkmodeEnabled
                 ? "bg-[#1a1a1a] border-gray-800 text-gray-300"
@@ -242,15 +194,12 @@ const Search = () => {
           </div>
         ) : (
           <>
-            {/* CAR RESULTS */}
             {searchType === "cars" && (
               <>
                 {cars.length === 0 ? (
                   <div
                     className={`rounded-2xl border px-4 py-10 text-center transition-all duration-500 ${
-                      isResultsVisible
-                        ? "opacity-100 translate-y-0"
-                        : "opacity-0 translate-y-3"
+                      isResultsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
                     } ${
                       isDarkmodeEnabled
                         ? "bg-[#1a1a1a] border-gray-800 text-gray-300"
@@ -275,9 +224,7 @@ const Search = () => {
                           style={{
                             transitionDelay: `${index * 40}ms`,
                             opacity: isResultsVisible ? 1 : 0,
-                            transform: isResultsVisible
-                              ? "translateY(0px)"
-                              : "translateY(10px)",
+                            transform: isResultsVisible ? "translateY(0px)" : "translateY(10px)",
                           }}
                         >
                           <Carcart car={car} />
@@ -288,18 +235,14 @@ const Search = () => {
                     {visibleCount < cars.length && (
                       <div
                         className={`flex justify-center mt-10 transition-all duration-500 ${
-                          isResultsVisible
-                            ? "opacity-100 translate-y-0"
-                            : "opacity-0 translate-y-3"
+                          isResultsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
                         }`}
                       >
                         <button
                           onClick={() => setVisibleCount((prev) => prev + 6)}
                           className="relative overflow-hidden inline-flex items-center justify-center px-6 py-3 rounded-xl bg-yellow-400 text-black font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-white/30 before:skew-x-12 before:transition-all before:duration-500 hover:before:left-[120%]"
                         >
-                          <span className="relative z-10">
-                            Daha çox
-                          </span>
+                          <span className="relative z-10">Daha çox</span>
                         </button>
                       </div>
                     )}
@@ -308,15 +251,12 @@ const Search = () => {
               </>
             )}
 
-            {/* USER RESULTS */}
             {searchType === "users" && (
               <>
                 {users.length === 0 ? (
                   <div
                     className={`rounded-2xl border px-4 py-10 text-center transition-all duration-500 ${
-                      isResultsVisible
-                        ? "opacity-100 translate-y-0"
-                        : "opacity-0 translate-y-3"
+                      isResultsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
                     } ${
                       isDarkmodeEnabled
                         ? "bg-[#1a1a1a] border-gray-800 text-gray-300"
@@ -340,13 +280,11 @@ const Search = () => {
                         style={{
                           transitionDelay: `${index * 40}ms`,
                           opacity: isResultsVisible ? 1 : 0,
-                          transform: isResultsVisible
-                            ? "translateY(0px)"
-                            : "translateY(10px)",
+                          transform: isResultsVisible ? "translateY(0px)" : "translateY(10px)",
                         }}
                       >
                         <Link
-                          to={`/profile/${user.id}`}
+                          to={`/owner-profile/${user.id}`}
                           className={`group block rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
                             isDarkmodeEnabled
                               ? "bg-[#1a1a1a] border-gray-800 hover:border-yellow-400"
@@ -357,7 +295,7 @@ const Search = () => {
                             <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-300 shrink-0 border-2 border-yellow-400/50">
                               {user.profileImageUrl ? (
                                 <img
-                                  src={`https://localhost:52247${user.profileImageUrl}`}
+                                  src={getFileUrl(user.profileImageUrl)}
                                   alt={user.fullName}
                                   className="w-full h-full object-cover"
                                 />
@@ -373,13 +311,7 @@ const Search = () => {
                                 {user.fullName}
                               </h2>
 
-                              <p
-                                className={`text-sm mt-1 ${
-                                  isDarkmodeEnabled
-                                    ? "text-gray-400"
-                                    : "text-gray-600"
-                                }`}
-                              >
+                              <p className={`text-sm mt-1 ${isDarkmodeEnabled ? "text-gray-400" : "text-gray-600"}`}>
                                 📍 {user.city || "Şəhər yoxdur"}
                               </p>
                             </div>

@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
-import { apiFetch } from "../utils/apiFetch";
 import ConfirmModal from "../companents/ConfirmModal";
 import defaultImage from "../assets/download.png";
-import { API_BASE_URL } from "../utils/config";
-
-const API_BASE = API_BASE_URL;
+import { apiFetch, getFileUrl } from "../utils/apiFetch";
 
 const MyCars = () => {
   const navigate = useNavigate();
@@ -75,9 +72,7 @@ const MyCars = () => {
   };
 
   const getImageUrl = (path) => {
-    if (!path) return defaultImage;
-    if (path.startsWith("http")) return path;
-    return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+    return getFileUrl(path, defaultImage);
   };
 
   const getCarId = (car) => car?.id || car?.carId || car?.Id;

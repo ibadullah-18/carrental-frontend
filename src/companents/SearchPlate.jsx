@@ -1,10 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
-import { apiFetch } from "../utils/apiFetch";
-import { API_BASE_URLL } from "../utils/config";
-
-const API_BASE_URL = API_BASE_URLL;
+import { apiFetch, getFileUrl } from "../utils/apiFetch";
 
 const normalizeArray = (data) => {
   if (Array.isArray(data)) return data;
@@ -12,12 +9,6 @@ const normalizeArray = (data) => {
   if (Array.isArray(data?.items)) return data.items;
   if (Array.isArray(data?.data)) return data.data;
   return [];
-};
-
-const getFileUrl = (url) => {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `${API_BASE_URL}${url}`;
 };
 
 const formatPlate = (value) => {
@@ -218,7 +209,6 @@ const SearchPlate = () => {
             >
               <div className="flex w-[58px] shrink-0 flex-col items-center justify-center bg-[#0b5ed7] text-white">
                 <span className="text-xl">🇦🇿</span>
-
                 <span className="text-[10px] font-black">AZ</span>
               </div>
 
@@ -226,9 +216,7 @@ const SearchPlate = () => {
                 value={plate}
                 onChange={(e) => setPlate(formatPlate(e.target.value))}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch();
-                  }
+                  if (e.key === "Enter") handleSearch();
                 }}
                 maxLength={10}
                 placeholder="77 MF 835"
@@ -317,7 +305,6 @@ const SearchPlate = () => {
                 ) : (
                   <div className="text-center text-white">
                     <div className="text-7xl">🚗</div>
-
                     <p className="mt-3 font-bold">Media yoxdur</p>
                   </div>
                 )}

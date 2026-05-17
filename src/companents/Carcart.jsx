@@ -1,10 +1,7 @@
 import { Link } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
 import defaultImage from "../assets/download.png";
-import { API_BASE_URL } from "../utils/config";
 
-
-const API_URL = API_BASE_URL;
 
 const Carcart = ({ car }) => {
   const { isDarkmodeEnabled } = useDarkmode();
@@ -12,10 +9,10 @@ const Carcart = ({ car }) => {
   const carId = car?.id || car?.carId;
 
   const image = car?.mainImageUrl
-    ? car.mainImageUrl.startsWith("http")
-      ? car.mainImageUrl
-      : `${API_URL}${car.mainImageUrl}`
-    : defaultImage;
+  ? car.mainImageUrl.startsWith("http")
+    ? car.mainImageUrl
+    : `http://localhost:8081${car.mainImageUrl}`
+  : defaultImage;
 
   const brand = car?.brand || "Marka";
   const model = car?.model || "Model";

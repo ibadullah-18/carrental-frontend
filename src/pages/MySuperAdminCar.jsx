@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react"
-import { apiFetch } from "../utils/apiFetch"
+import { apiFetch, getFileUrl } from "../utils/apiFetch"
 import { getAccessToken, setAccessToken, setRefreshToken, clearTokens } from "../utils/auth"
-import { API_BASE_URLL } from "../utils/config";
 
-const API_BASE_URL = API_BASE_URLL;
 const arr = (data) => Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : Array.isArray(data?.$values) ? data.$values : Array.isArray(data?.items) ? data.items : []
 const unwrap = (data) => data?.data ?? data
-const fileUrl = (url) => !url ? "" : url.startsWith("http") ? url : `${API_BASE_URL}${url}`
+const fileUrl = (url) => getFileUrl(url, "")
 const getTokens = (data) => ({ accessToken: data?.accessToken || data?.token || data?.jwtToken || data?.data?.accessToken || data?.data?.token || "", refreshToken: data?.refreshToken || data?.data?.refreshToken || "" })
 const emptyPackage = { name: "", durationDays: "", price: "", currency: "AZN", isVip: false, isActive: true, sortOrder: "" }
 const periodName = (p) => p === "daily" ? "Son 1 gün" : p === "weekly" ? "Son 7 gün" : p === "monthly" ? "Son 1 ay" : "Naməlum"
@@ -57,18 +55,43 @@ export default function MySuperAdminCar() {
   }
 
   const login = async (e) => {
-    e.preventDefault(); setError(""); setLoginLoading(true)
+    e.preventDefault()
+    setError("")
+    setLoginLoading(true)
+
     try {
-      const res = await fetch(`${API_BASE_URL}/api/Auth/login`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email, password }) })
+      const res = await apiFetch("/api/Auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+
       const data = await res.json().catch(() => null)
       if (!res.ok) throw new Error(data?.message || "Email və ya şifrə yanlışdır")
+
       const { accessToken, refreshToken } = getTokens(data)
       if (!accessToken) throw new Error("Access token gəlmədi")
-      const check = await fetch(`${API_BASE_URL}/api/SuperAdmin/dashboard`, { headers:{ Authorization:`Bearer ${accessToken}` } })
-      if (check.status === 401 || check.status === 403) throw new Error("Bu hesab SuperAdmin deyil")
-      setAccessToken(accessToken); if (refreshToken) setRefreshToken(refreshToken)
+
+      const check = await apiFetch(
+        "/api/SuperAdmin/dashboard",
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+        false
+      )
+
+      if (check.status === 401 || check.status === 403) {
+        throw new Error("Bu hesab SuperAdmin deyil")
+      }
+
+      setAccessToken(accessToken)
+      if (refreshToken) setRefreshToken(refreshToken)
       setToken(accessToken)
-    } catch (e) { clearTokens(); setToken(""); setError(e.message) } finally { setLoginLoading(false) }
+    } catch (e) {
+      clearTokens()
+      setToken("")
+      setError(e.message)
+    } finally {
+      setLoginLoading(false)
+    }
   }
 
   const loadDashboard = async () => { setLoading(true); try { const [d,o,r] = await Promise.all([request("/api/SuperAdmin/dashboard"), request("/api/Stats/overview"), request(`/api/Stats/report?period=${period}`)]); setDashboard(unwrap(d)); setOverview(unwrap(o)); setReportStats(unwrap(r)) } catch(e){setError(e.message)} finally{setLoading(false)} }
@@ -117,7 +140,7 @@ export default function MySuperAdminCar() {
     {tab==="cars"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Nömrəyə görə maşın axtar</h2><form onSubmit={searchCars} className="mb-5 flex gap-3"><input className="h-12 flex-1 rounded-2xl border px-4" value={plate} onChange={(e)=>setPlate(e.target.value)} placeholder="77MF835"/><button className="rounded-2xl bg-blue-600 px-7 font-black text-white">Axtar</button></form><div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{cars.map((c)=><button key={c.id||c.carId} onClick={()=>loadCar(c.id||c.carId)} className="flex gap-4 rounded-3xl border p-4 text-left hover:bg-blue-50">{mainImg(c)?<img src={mainImg(c)} className="h-24 w-32 rounded-2xl object-cover"/>:<div className="flex h-24 w-32 items-center justify-center rounded-2xl bg-slate-100 text-xs font-black text-slate-400">Şəkil yoxdur</div>}<div><h3 className="font-black">{c.plateNumber} — {c.brand} {c.model}</h3><p className="text-sm text-slate-500">{c.description}</p></div></button>)}</div></section>}
     {tab==="payments"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Ödənişlər</h2><div className="space-y-3">{payments.map((p)=><button key={p.id} onClick={()=>setSelectedPayment(p)} className="w-full rounded-3xl border p-4 text-left hover:bg-blue-50"><div className="flex justify-between"><div><h3 className="font-black">{p.amount} {p.currency} — {p.packageName}</h3><p className="text-sm text-slate-500">{p.userFullName} • {p.plateNumber}</p></div><Badge good>Ödənilib</Badge></div></button>)}</div></section>}
     {tab==="reports"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Bütün reportlar</h2><div className="space-y-3">{reports.map((r)=><button key={r.id} onClick={()=>setSelectedReport(r)} className="w-full rounded-3xl border p-4 text-left hover:bg-blue-50"><div className="flex justify-between"><div><h3 className="font-black">{r.plateNumber} — {r.carBrand} {r.carModel}</h3><p className="text-sm text-slate-600">{r.description}</p><p className="text-xs text-slate-400">Şikayət edən: {r.reportedByFullName} • Status: {r.status}</p></div><button type="button" onClick={(e)=>{e.stopPropagation();loadCar(r.carId)}} className="rounded-2xl bg-blue-600 px-4 py-2 font-black text-white">Maşına bax</button></div></button>)}</div></section>}
-    {tab==="packages"&&<section className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]"><form onSubmit={savePackage} className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">{selectedPackage?"Paketi yenilə":"Yeni paket yarat"}</h2>{[["name","Ad"],["durationDays","Gün sayı"],["price","Qiymət"],["currency","Valyuta"],["sortOrder","Sıralama"]].map(([k,l])=><input key={k} className="mb-3 h-12 w-full rounded-2xl border px-4" placeholder={l} type={["durationDays","price","sortOrder"].includes(k)?"number":"text"} value={packageForm[k]} onChange={(e)=>setPackageForm({...packageForm,[k]:e.target.value})}/>) }<label className="mb-3 flex gap-2 font-bold"><input type="checkbox" checked={packageForm.isVip} onChange={(e)=>setPackageForm({...packageForm,isVip:e.target.checked})}/> VIP paket</label>{selectedPackage&&<label className="mb-3 flex gap-2 font-bold"><input type="checkbox" checked={packageForm.isActive} onChange={(e)=>setPackageForm({...packageForm,isActive:e.target.checked})}/> Aktivdir</label>}<button className="h-12 w-full rounded-2xl bg-blue-600 font-black text-white">{selectedPackage?"Yenilə":"Yarat"}</button></form><div className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Paketlər</h2><div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{packages.map((p)=><div key={p.id} className="rounded-3xl border p-4"><div className="flex justify-between"><div><h3 className="font-black">{p.name}</h3><p className="text-sm text-slate-500">{p.price} {p.currency} • {p.durationDays} gün</p></div>{p.isActive?<Badge good>Aktiv</Badge>:<Badge>Passiv</Badge>}</div><button onClick={()=>{setSelectedPackage(p);setPackageForm({name:p.name||"",durationDays:p.durationDays||"",price:p.price||"",currency:p.currency||"AZN",isVip:Boolean(p.isVip),isActive:Boolean(p.isActive),sortOrder:p.sortOrder||""})}} className="mt-4 rounded-xl bg-slate-950 px-4 py-2 font-black text-white">Düzəlt</button></div>)}</div></div></section>}
+    {tab==="packages"&&<section className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]"><form onSubmit={savePackage} className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">{selectedPackage?"Paketi yenilə":"Yeni paket yarat"}</h2>{[["name","Ad"],["durationDays","Gün sayı"],["price","Qiymət"],["currency","Valyuta"],["sortOrder","Sıralama"]].map(([k,l])=><input key={k} className="mb-3 h-12 w-full rounded-2xl border px-4" placeholder={l} type={["durationDays","price","sortOrder"].includes(k)?"number":"text"} value={packageForm[k]} onChange={(e)=>setPackageForm({...packageForm,[k]:e.target.value})}/>) }<label className="mb-3 flex gap-2 font-bold"><input type="checkbox" checked={packageForm.isVip} onChange={(e)=>setPackageForm({...packageForm,isVip:e.target.checked})}/> VIP paket</label>{selectedPackage&&<label className="mb-3 flex gap-2 font-bold"><input type="checkbox" checked={packageForm.isActive} onChange={(e)=>setPackageForm({...packageForm,isActive:e.target.checked})}/> Aktivdir</label>}<button className="h-12 w-full rounded-2xl bg-blue-600 font-black text-white">{selectedPackage?"Yenilə":"Yarat"}</button></form><div className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Paketlər</h2><div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{packages.map((p)=><div key={p.id} className="rounded-3xl border p-4"><div className="flex justify-between"><div><h3 className="font-black">{p.name}</h3><p className="text-sm text-slate-500">{p.price} {p.currency} • {p.durationDays} gün</p></div>{p.isActive?<Badge good>Aktiv</Badge>:<Badge>Passiv</Badge>}</div><button onClick={()=>editPackage(p)} className="mt-4 rounded-xl bg-slate-950 px-4 py-2 font-black text-white">Düzəlt</button></div>)}</div></div></section>}
     {tab==="audit"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Audit loglar</h2>{auditLogs.map((l)=><div key={l.id} className="mb-3 rounded-3xl border p-4"><h3 className="font-black">{l.actionType} — {l.entityName}</h3><p className="text-sm text-slate-500">{l.actorFullName} • {l.actorEmail}</p><p className="text-xs text-slate-400">{l.actionAt}</p></div>)}</section>}
     {tab==="legal"&&<section className="rounded-[2rem] bg-white p-6"><h2 className="mb-4 text-2xl font-black">Hüquqi razılıqlar</h2>{legalConsents.map((c)=><div key={c.id} className="mb-3 rounded-3xl border p-4"><h3 className="font-black">{c.userFullName} — tip {c.consentType}</h3><p className="text-sm text-slate-600">{c.consentTextSnapshot}</p><p className="text-xs text-slate-400">{c.acceptedAt}</p></div>)}</section>}
     </main>{selectedUser&&<UserModal user={selectedUser}/>} {selectedCar&&<CarModal car={selectedCar}/>} {selectedPayment&&<PaymentModal payment={selectedPayment}/>} {selectedReport&&<Modal title="Report detalları" onClose={()=>setSelectedReport(null)} wide={false}><div className="mb-4 rounded-3xl bg-yellow-50 p-4"><p className="font-black text-yellow-800">Report yazısı</p><p>{selectedReport.description}</p></div><button onClick={()=>loadCar(selectedReport.carId)} className="mb-4 w-full rounded-2xl bg-blue-600 px-4 py-3 font-black text-white">{selectedReport.plateNumber} — {selectedReport.carBrand} {selectedReport.carModel} maşınına bax</button><div className="grid grid-cols-1 gap-3">{Object.entries(selectedReport).map(([k,v])=><Info key={k} label={k} value={typeof v === "object" ? JSON.stringify(v) : v}/>)}</div></Modal>}</div>

@@ -5,9 +5,9 @@ import {
   setRefreshToken,
   clearTokens,
 } from "./auth"
-import { API_BASE_URL } from "../utils/config";
 
-const BASE_URL = API_BASE_URL;
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8081"
 
 let isRefreshing = false
 let refreshPromise = null
@@ -21,7 +21,7 @@ async function refreshAccessToken() {
     throw new Error("Refresh token tapılmadı")
   }
 
-  const res = await fetch(`${BASE_URL}/api/Auth/refresh-token`, {
+  const res = await fetch(`${API_BASE_URL}/api/Auth/refresh-token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -39,8 +39,14 @@ async function refreshAccessToken() {
     throw new Error(data?.message || data?.Message || "Sessiya bitib")
   }
 
-  const newAccessToken = data?.accessToken || data?.token || data?.data?.accessToken || data?.data?.token
-  const newRefreshToken = data?.refreshToken || data?.data?.refreshToken
+  const newAccessToken =
+    data?.accessToken ||
+    data?.token ||
+    data?.data?.accessToken ||
+    data?.data?.token
+
+  const newRefreshToken =
+    data?.refreshToken || data?.data?.refreshToken
 
   if (!newAccessToken) {
     clearTokens()
@@ -71,13 +77,19 @@ function buildHeaders(customHeaders = {}, hasBody = false, isFormData = false) {
   return headers
 }
 
+export function getFileUrl(url, fallback = "") {
+  if (!url) return fallback
+  if (url.startsWith("http://") || url.startsWith("https://")) return url
+  return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`
+}
+
 export async function apiFetch(url, options = {}, retry = true) {
   const isFormData = options.body instanceof FormData
   const hasBody = !!options.body
 
   let headers = buildHeaders(options.headers, hasBody, isFormData)
 
-  let res = await fetch(`${BASE_URL}${url}`, {
+  let res = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
   })
@@ -98,7 +110,7 @@ export async function apiFetch(url, options = {}, retry = true) {
         Authorization: `Bearer ${newAccessToken}`,
       }
 
-      res = await fetch(`${BASE_URL}${url}`, {
+      res = await fetch(`${API_BASE_URL}${url}`, {
         ...options,
         headers,
       })
@@ -110,3 +122,5 @@ export async function apiFetch(url, options = {}, retry = true) {
 
   return res
 }
+
+apiFetch.baseUrl = API_BASE_URL

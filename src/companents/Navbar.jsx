@@ -8,7 +8,7 @@ import SearchIcon from "../assets/search-outline.png"
 import Sunny from "../assets/sunny.png"
 import Moon from "../assets/night-mode.png"
 import { getAccessToken, clearTokens } from "../utils/auth"
-import { apiFetch } from "../utils/apiFetch"
+import { apiFetch, getFileUrl } from "../utils/apiFetch"
 
 const Navbar = () => {
   const { isDarkmodeEnabled, toggleDarkmode } = useDarkmode()
@@ -681,7 +681,7 @@ const Navbar = () => {
                   >
                     {profileImageUrl ? (
                       <img
-                        src={`https://localhost:52247${profileImageUrl}`}
+                        src={getFileUrl(profileImageUrl)}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />
@@ -781,7 +781,7 @@ const Navbar = () => {
                   >
                     {profileImageUrl ? (
                       <img
-                        src={`https://localhost:52247${profileImageUrl}`}
+                        src={getFileUrl(profileImageUrl)}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />

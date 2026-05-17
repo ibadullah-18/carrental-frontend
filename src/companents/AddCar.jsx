@@ -561,7 +561,7 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                       <p className="text-sm opacity-80">Paketlər yüklənir...</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {packages.map((item) => {
                         const selected = packageId === item.id;
 

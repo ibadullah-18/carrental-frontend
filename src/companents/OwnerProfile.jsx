@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { useDarkmode } from "../stores/useDarkmode"
-import { API_BASE_URL } from "../utils/config";
+import { apiFetch, getFileUrl } from "../utils/apiFetch"
 import {
   FaInstagram,
   FaTiktok,
@@ -13,8 +13,6 @@ import {
 } from "react-icons/fa"
 import { IoClose } from "react-icons/io5"
 
-const API_BASE = API_BASE_URL;
-
 const OwnerProfile = () => {
   const { userId } = useParams()
   const { isDarkmodeEnabled } = useDarkmode()
@@ -24,11 +22,7 @@ const OwnerProfile = () => {
   const [error, setError] = useState("")
   const [isImageOpen, setIsImageOpen] = useState(false)
 
-  const getImageUrl = (url) => {
-    if (!url) return "/default-user.png"
-    if (url.startsWith("http")) return url
-    return `${API_BASE}${url}`
-  }
+  const getImageUrl = (url) => getFileUrl(url, "/default-user.png")
 
   const fixUrl = (url) => {
     if (!url) return ""
@@ -42,9 +36,10 @@ const OwnerProfile = () => {
         setLoading(true)
         setError("")
 
-        const res = await fetch(`${API_BASE}/api/Users/${userId}/public-profile`, {
+        const res = await apiFetch(`/api/Users/${userId}/public-profile`, {
+          method: "GET",
           headers: {
-            accept: "*/*",
+            Accept: "*/*",
           },
         })
 
