@@ -156,7 +156,7 @@ const Homepage = () => {
           <div className="rounded-[18px] sm:rounded-[22px] bg-black text-white overflow-hidden px-4 sm:px-8 lg:px-12 pt-8 sm:pt-10 lg:pt-12">
             <div className="max-w-[850px] mx-auto text-center">
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-                Öz maşınını paylaş,
+                Öz maşınını paylaşma,
                 <br className="hidden sm:block" />
                 hər kəsə göstər
               </h1>
