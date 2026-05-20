@@ -525,8 +525,8 @@ const Navbar = () => {
               </div>
 
               <div className="flex items-center text-xl font-semibold">
-                <span>My</span>
-                <span className="text-red-500 ml-1">CAR</span>
+                <span>ShowCar</span>
+                <span className="text-red-500 ml-1">HUB</span>
               </div>
             </Link>
           </div>
@@ -681,7 +681,7 @@ const Navbar = () => {
                   >
                     {profileImageUrl ? (
                       <img
-                        src={`https://localhost:52247${profileImageUrl}`}
+                        src={`http://showcarhub.com${profileImageUrl}`}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />

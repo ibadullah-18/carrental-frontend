@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react"
 import { apiFetch } from "./utils/apiFetch"
 import { getAccessToken, setAccessToken, setRefreshToken, clearTokens } from "./utils/auth"
-
-const API_BASE_URL = "https://localhost:52247"
+import { API_BASE_URL } from "./utils/config"
 
 const arr = (data) => Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : Array.isArray(data?.$values) ? data.$values : Array.isArray(data?.items) ? data.items : []
 const unwrap = (data) => data?.data ?? data

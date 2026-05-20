@@ -357,7 +357,7 @@ const Search = () => {
                             <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-300 shrink-0 border-2 border-yellow-400/50">
                               {user.profileImageUrl ? (
                                 <img
-                                  src={`https://localhost:52247${user.profileImageUrl}`}
+                                  src={`http://showcarhub.com${user.profileImageUrl}`}
                                   alt={user.fullName}
                                   className="w-full h-full object-cover"
                                 />

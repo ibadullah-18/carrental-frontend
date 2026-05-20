@@ -6,7 +6,6 @@ import { apiFetch } from "../utils/apiFetch"
 import defaultImage from "../assets/download.png"
 import { API_BASE_URL } from "../utils/config";
 
-const API_BASE_URL = API_BASE_URL;
 
 const EyeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">

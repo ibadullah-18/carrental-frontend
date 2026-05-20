@@ -164,9 +164,9 @@ const Footer = () => {
                 />
               </div>
 
-              <h1 className="text-2xl font-semibold">My</h1>
+              <h1 className="text-2xl font-semibold">ShowCar</h1>
               <h1 className="text-2xl text-red-500 ml-1 font-semibold">
-                Car
+                HUB
               </h1>
             </div>
 

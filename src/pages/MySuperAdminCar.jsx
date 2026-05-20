@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react"
 import { apiFetch } from "../utils/apiFetch"
 import { getAccessToken, setAccessToken, setRefreshToken, clearTokens } from "../utils/auth"
-import { API_BASE_URLL } from "../utils/config";
+import { API_BASE_URL } from "../utils/config";
 
-const API_BASE_URL = API_BASE_URLL;
 const arr = (data) => Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : Array.isArray(data?.$values) ? data.$values : Array.isArray(data?.items) ? data.items : []
 const unwrap = (data) => data?.data ?? data
 const fileUrl = (url) => !url ? "" : url.startsWith("http") ? url : `${API_BASE_URL}${url}`

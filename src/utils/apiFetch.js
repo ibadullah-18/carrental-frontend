@@ -7,7 +7,7 @@ import {
 } from "./auth"
 import { API_BASE_URL } from "../utils/config";
 
-const BASE_URL = API_BASE_URL;
+
 
 let isRefreshing = false
 let refreshPromise = null
@@ -21,7 +21,7 @@ async function refreshAccessToken() {
     throw new Error("Refresh token tapılmadı")
   }
 
-  const res = await fetch(`${BASE_URL}/api/Auth/refresh-token`, {
+  const res = await fetch(`${API_BASE_URL}/api/Auth/refresh-token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -77,7 +77,7 @@ export async function apiFetch(url, options = {}, retry = true) {
 
   let headers = buildHeaders(options.headers, hasBody, isFormData)
 
-  let res = await fetch(`${BASE_URL}${url}`, {
+  let res = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
   })
@@ -98,7 +98,7 @@ export async function apiFetch(url, options = {}, retry = true) {
         Authorization: `Bearer ${newAccessToken}`,
       }
 
-      res = await fetch(`${BASE_URL}${url}`, {
+      res = await fetch(`${API_BASE_URL}${url}`, {
         ...options,
         headers,
       })
