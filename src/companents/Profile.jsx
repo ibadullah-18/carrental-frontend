@@ -16,11 +16,8 @@ import {
 } from "react-icons/fa"
 
 import { useDarkmode } from "../stores/useDarkmode"
-import { apiFetch } from "../utils/apiFetch"
+import { apiFetch, getFileUrl } from "../utils/apiFetch"
 import { getAccessToken, parseJwt } from "../utils/auth"
-import { API_BASE_URL } from "../utils/config";
-
-const BASE_URL = API_BASE_URL;
 
 const Profile = () => {
   const { isDarkmodeEnabled } = useDarkmode()
@@ -79,8 +76,7 @@ const Profile = () => {
 
   const getFullImageUrl = (url) => {
     if (!url || url === "string") return ""
-    if (url.startsWith("http://") || url.startsWith("https://")) return url
-    return `${BASE_URL}${url}`
+    return getFileUrl(url, "")
   }
 
   const normalizeUrl = (value) => {
@@ -308,9 +304,7 @@ const Profile = () => {
       "Email dəyişmə kodu göndərildi"
     )
 
-    if (ok) {
-      setResendCountdown(10)
-    }
+    if (ok) setResendCountdown(10)
   }
 
   const handleResendEmailCode = async () => {
@@ -326,9 +320,7 @@ const Profile = () => {
       "Kod yenidən göndərildi"
     )
 
-    if (ok) {
-      setResendCountdown(10)
-    }
+    if (ok) setResendCountdown(10)
   }
 
   const handleConfirmEmailChange = async () => {

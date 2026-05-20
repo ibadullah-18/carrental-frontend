@@ -4,7 +4,6 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useDarkmode } from "../stores/useDarkmode"
 import { apiFetch } from "../utils/apiFetch"
 import defaultImage from "../assets/download.png"
-import { API_BASE_URL } from "../utils/config";
 
 
 const EyeIcon = () => (
@@ -134,6 +133,16 @@ const getReasonLabel = (value) => {
   return found?.label || `Səbəb #${value || "-"}`
 }
 
+const normalizeArray = (data) => {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.$values)) return data.$values
+  if (Array.isArray(data?.data)) return data.data
+  if (Array.isArray(data?.items)) return data.items
+  if (Array.isArray(data?.result)) return data.result
+  if (Array.isArray(data?.reports)) return data.reports
+  return []
+}
+
 const Details = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -159,9 +168,8 @@ const Details = () => {
   const [myReportsError, setMyReportsError] = useState("")
 
   const makeUrl = (path) => {
-    if (!path) return null
-    if (path.startsWith("http")) return path
-    return `${API_BASE_URL}${path}`
+    if (!path) return ""
+    return path.startsWith("http") ? path : `http://13.36.176.206:8081${path}`
   }
 
   useEffect(() => {
@@ -233,43 +241,32 @@ const Details = () => {
     }
   }, [modalOpen])
 
- const fetchMyReports = async () => {
-  try {
-    setMyReportsLoading(true)
-    setMyReportsError("")
+  const fetchMyReports = async () => {
+    try {
+      setMyReportsLoading(true)
+      setMyReportsError("")
 
-    const res = await apiFetch("/api/Reports/my-reports")
+      const res = await apiFetch("/api/Reports/my-reports")
 
-    const text = await res.text()
-    const data = text ? JSON.parse(text) : null
+      const text = await res.text()
+      const data = text ? JSON.parse(text) : null
 
-    console.log("MY REPORTS RESPONSE:", data)
+      console.log("MY REPORTS RESPONSE:", data)
 
-    if (!res.ok) {
-      throw new Error(data?.message || "Reportlar yüklənmədi")
+      if (!res.ok) {
+        throw new Error(data?.message || "Reportlar yüklənmədi")
+      }
+
+      const reports = normalizeArray(data)
+
+      setMyReports(reports)
+    } catch (err) {
+      console.log("MY REPORTS ERROR:", err)
+      setMyReportsError(err.message || "Reportlar yüklənərkən xəta baş verdi")
+    } finally {
+      setMyReportsLoading(false)
     }
-
-    const reports =
-      Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-        ? data.data
-        : Array.isArray(data?.items)
-        ? data.items
-        : Array.isArray(data?.reports)
-        ? data.reports
-        : Array.isArray(data?.result)
-        ? data.result
-        : []
-
-    setMyReports(reports)
-  } catch (err) {
-    console.log("MY REPORTS ERROR:", err)
-    setMyReportsError(err.message || "Reportlar yüklənərkən xəta baş verdi")
-  } finally {
-    setMyReportsLoading(false)
   }
-}
 
   const toggleMyReports = async () => {
     const next = !myReportsOpen
@@ -325,17 +322,42 @@ const Details = () => {
   }
 
   const media = useMemo(() => {
-    const items = Array.isArray(car?.media) ? car.media : []
+    const items = normalizeArray(
+      car?.media ||
+        car?.medias ||
+        car?.carMedia ||
+        car?.carMedias ||
+        car?.images ||
+        car?.videos
+    )
 
     const mapped = items
-      .map((item) => ({
-        id: item.id,
-        type: item.mediaType === 2 ? "video" : "image",
-        url: makeUrl(item.fileUrl),
-        thumbnail: makeUrl(item.thumbnailUrl) || makeUrl(item.fileUrl),
-        isMain: item.isMain,
-        displayOrder: item.displayOrder || 0,
-      }))
+      .map((item) => {
+        const mediaType = Number(item.mediaType ?? item.type)
+
+        const fileUrl = makeUrl(
+          item.fileUrl ||
+            item.url ||
+            item.imageUrl ||
+            item.videoUrl ||
+            item.path
+        )
+
+        const thumbnailUrl = makeUrl(
+          item.thumbnailUrl ||
+            item.thumbUrl ||
+            item.previewUrl
+        )
+
+        return {
+          id: item.id,
+          type: mediaType === 2 ? "video" : "image",
+          url: fileUrl,
+          thumbnail: thumbnailUrl || fileUrl,
+          isMain: Boolean(item.isMain),
+          displayOrder: Number(item.displayOrder ?? 0),
+        }
+      })
       .filter((item) => item.url)
 
     const sorted = mapped.sort((a, b) => {
@@ -571,7 +593,7 @@ const Details = () => {
                   }`}
                 >
                   <img
-                    src={ownerImage}
+                    src={ownerImage || defaultImage}
                     alt={ownerName}
                     className="w-14 h-14 rounded-full object-cover border-2 border-yellow-400"
                   />

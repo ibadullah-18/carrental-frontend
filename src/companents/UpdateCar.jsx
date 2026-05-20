@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDarkmode } from "../stores/useDarkmode";
-import { apiFetch } from "../utils/apiFetch";
+import { apiFetch, getFileUrl } from "../utils/apiFetch";
 import { REGION_OPTIONS } from "../data/regions";
 import { CAR_BRANDS, COLOR_OPTIONS, YEAR_OPTIONS } from "../data/carOptions";
 import SmartSelect from "../companents/SmartSelect";
-import { API_BASE_URL } from "../utils/config";
-
-const API_BASE = API_BASE_URL;
 
 const UpdateCar = () => {
   const { id } = useParams();
@@ -70,9 +67,7 @@ const UpdateCar = () => {
   }, [mediaPreviewUrls]);
 
   const getMediaUrl = (path) => {
-    if (!path) return "https://placehold.co/600x400?text=No+Media";
-    if (path.startsWith("http")) return path;
-    return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+    return getFileUrl(path, "https://placehold.co/600x400?text=No+Media");
   };
 
   const normalizeMedia = (carData) => {
@@ -338,9 +333,7 @@ const UpdateCar = () => {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mt-6">
           <div className="xl:col-span-5 space-y-6">
             <div className={`rounded-[26px] border p-4 sm:p-6 ${cardClassName}`}>
-              <h2 className="text-xl sm:text-2xl font-bold mb-4">
-                Mövcud media
-              </h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-4">Mövcud media</h2>
 
               {existingMedia.length === 0 ? (
                 <p className={isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}>
@@ -438,15 +431,8 @@ const UpdateCar = () => {
 
             <div className={`rounded-[26px] border p-4 sm:p-6 ${cardClassName}`}>
               <div className="flex items-center justify-between gap-3 mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold">
-                  Yeni media əlavə et
-                </h2>
-
-                <span
-                  className={`text-sm ${
-                    isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
+                <h2 className="text-xl sm:text-2xl font-bold">Yeni media əlavə et</h2>
+                <span className={`text-sm ${isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}`}>
                   {newMediaFiles.length} fayl seçilib
                 </span>
               </div>
@@ -459,11 +445,7 @@ const UpdateCar = () => {
                 className={inputClassName}
               />
 
-              <p
-                className={`mt-2 text-xs ${
-                  isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
+              <p className={`mt-2 text-xs ${isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"}`}>
                 Şəkil və video əlavə edə bilərsiniz. Əsas media yalnız şəkil ola bilər.
               </p>
 
@@ -513,9 +495,7 @@ const UpdateCar = () => {
 
           <div className="xl:col-span-7">
             <div className={`rounded-[26px] border p-4 sm:p-6 ${cardClassName}`}>
-              <h2 className="text-xl sm:text-2xl font-bold mb-6">
-                Maşın məlumatları
-              </h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-6">Maşın məlumatları</h2>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -536,9 +516,7 @@ const UpdateCar = () => {
                     value={model}
                     onChange={setModel}
                     options={modelOptions}
-                    placeholder={
-                      brand ? "Model seçin və ya yazın" : "Əvvəl marka seçin"
-                    }
+                    placeholder={brand ? "Model seçin və ya yazın" : "Əvvəl marka seçin"}
                     disabled={!brand}
                     isDarkmodeEnabled={isDarkmodeEnabled}
                   />

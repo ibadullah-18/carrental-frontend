@@ -5,9 +5,7 @@ import {
   setRefreshToken,
   clearTokens,
 } from "./auth"
-import { API_BASE_URL } from "../utils/config";
-
-
+import { API_BASE_URL } from "./config"
 
 let isRefreshing = false
 let refreshPromise = null
@@ -39,8 +37,14 @@ async function refreshAccessToken() {
     throw new Error(data?.message || data?.Message || "Sessiya bitib")
   }
 
-  const newAccessToken = data?.accessToken || data?.token || data?.data?.accessToken || data?.data?.token
-  const newRefreshToken = data?.refreshToken || data?.data?.refreshToken
+  const newAccessToken =
+    data?.accessToken ||
+    data?.token ||
+    data?.data?.accessToken ||
+    data?.data?.token
+
+  const newRefreshToken =
+    data?.refreshToken || data?.data?.refreshToken
 
   if (!newAccessToken) {
     clearTokens()
@@ -69,6 +73,12 @@ function buildHeaders(customHeaders = {}, hasBody = false, isFormData = false) {
   }
 
   return headers
+}
+
+export function getFileUrl(url, fallback = "") {
+  if (!url) return fallback
+  if (url.startsWith("http://") || url.startsWith("https://")) return url
+  return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`
 }
 
 export async function apiFetch(url, options = {}, retry = true) {
@@ -110,3 +120,5 @@ export async function apiFetch(url, options = {}, retry = true) {
 
   return res
 }
+
+apiFetch.baseUrl = API_BASE_URL

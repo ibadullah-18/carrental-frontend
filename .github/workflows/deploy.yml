@@ -1,0 +1,28 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy frontend to AWS
+        uses: appleboy/ssh-action@v1.0.3
+
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USER }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+
+          script: |
+            cd ~/showcar/carrental-frontend
+            git fetch origin
+            git reset --hard origin/main
+
+            cd ~/showcar
+            docker compose build --no-cache frontend
+            docker compose up -d frontend
