@@ -10,7 +10,7 @@ const Carcart = ({ car }) => {
   const image = car?.mainImageUrl
     ? car.mainImageUrl.startsWith("http")
       ? car.mainImageUrl
-      : `http://showcarhub.com${car.mainImageUrl}`
+      : `https://showcarhub.com${car.mainImageUrl}`
     : defaultImage;
 
   const brand = car?.brand || "Marka";
