@@ -32,7 +32,6 @@ const Navbar = () => {
   const location = useLocation()
 
   const profileRef = useRef(null)
-  const notificationRef = useRef(null)
   const desktopSearchInputRef = useRef(null)
   const mobileSearchInputRef = useRef(null)
 
@@ -51,10 +50,24 @@ const Navbar = () => {
     }
   }
 
+  const resetAuthState = () => {
+    clearTokens()
+    setToken(null)
+    setProfileImageUrl("")
+    setNotifications([])
+    setUnreadCount(0)
+    setIsProfileOpen(false)
+    setIsNotificationOpen(false)
+  }
+
   const fetchUserProfile = async (currentToken) => {
     try {
       const userId = getUserIdFromToken(currentToken)
-      if (!userId) return
+
+      if (!userId) {
+        resetAuthState()
+        return
+      }
 
       const response = await apiFetch(`/api/Users/${userId}/public-profile`, {
         method: "GET",
@@ -62,6 +75,11 @@ const Navbar = () => {
           Accept: "*/*",
         },
       })
+
+      if (response.status === 401 || response.status === 403) {
+        resetAuthState()
+        return
+      }
 
       if (!response.ok) return
 
@@ -74,6 +92,13 @@ const Navbar = () => {
 
   const fetchUnreadCount = async () => {
     try {
+      const currentToken = getAccessToken()
+
+      if (!currentToken) {
+        setUnreadCount(0)
+        return
+      }
+
       const response = await apiFetch("/api/Notifications/unread-count", {
         method: "GET",
         headers: {
@@ -81,17 +106,34 @@ const Navbar = () => {
         },
       })
 
-      if (!response.ok) return
-
-      const data = await response.json()
-
-      if (typeof data === "number") {
-        setUnreadCount(data)
-      } else {
-        setUnreadCount(data?.count ?? data?.unreadCount ?? 0)
+      if (response.status === 401 || response.status === 403) {
+        resetAuthState()
+        return
       }
+
+      if (!response.ok) {
+        setUnreadCount(0)
+        return
+      }
+
+      const text = await response.text()
+      const data = text ? JSON.parse(text) : 0
+
+      const count =
+        typeof data === "number"
+          ? data
+          : Number(
+              data?.count ??
+                data?.unreadCount ??
+                data?.unread ??
+                data?.totalUnread ??
+                0
+            )
+
+      setUnreadCount(Number.isNaN(count) ? 0 : count)
     } catch (error) {
       console.log("Unread notifications fetch error:", error)
+      setUnreadCount(0)
     }
   }
 
@@ -101,33 +143,40 @@ const Navbar = () => {
 
     const response = await apiFetch("/api/Notifications", {
       method: "GET",
-      headers: {
-        Accept: "*/*",
-      },
+      headers: { Accept: "*/*" },
     })
 
-    if (!response.ok) {
-      console.log("Notifications response error:", response.status)
+    if (response.status === 401 || response.status === 403) {
+      resetAuthState()
       return
     }
 
-    const data = await response.json()
-    console.log("Notifications data:", data)
+    if (!response.ok) return
 
-    const list =
-      Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-        ? data.data
-        : Array.isArray(data?.items)
-        ? data.items
-        : Array.isArray(data?.notifications)
-        ? data.notifications
-        : Array.isArray(data?.result)
-        ? data.result
-        : []
+    const data = await response.json()
+
+    const list = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data?.items)
+      ? data.items
+      : Array.isArray(data?.notifications)
+      ? data.notifications
+      : Array.isArray(data?.result)
+      ? data.result
+      : Array.isArray(data?.$values)
+      ? data.$values
+      : []
 
     setNotifications(list)
+
+    const calculatedUnread = list.filter((item) => {
+      const readValue = item?.isRead ?? item?.IsRead ?? item?.read ?? item?.Read
+      return readValue === false
+    }).length
+
+    setUnreadCount(calculatedUnread)
   } catch (error) {
     console.log("Notifications fetch error:", error)
   } finally {
@@ -135,14 +184,31 @@ const Navbar = () => {
   }
 }
 
-  const openNotifications = async () => {
+  const syncAuthState = async () => {
+    const currentToken = getAccessToken()
+
+    if (!currentToken) {
+      resetAuthState()
+      return
+    }
+
+    setToken(currentToken)
+    await fetchUserProfile(currentToken)
+    await fetchNotifications()
+  }
+
+  const openNotifications = async (e) => {
+    e?.stopPropagation()
+
     setIsProfileOpen(false)
     setIsMenuOpen(false)
-    setIsNotificationOpen((prev) => !prev)
 
-    if (!isNotificationOpen) {
-      await fetchNotifications()
+    const nextOpen = !isNotificationOpen
+    setIsNotificationOpen(nextOpen)
+
+    if (nextOpen) {
       await fetchUnreadCount()
+      await fetchNotifications()
     }
   }
 
@@ -160,6 +226,11 @@ const Navbar = () => {
         }
       )
 
+      if (response.status === 401 || response.status === 403) {
+        resetAuthState()
+        return
+      }
+
       if (!response.ok) return
 
       setNotifications((prev) =>
@@ -170,13 +241,15 @@ const Navbar = () => {
         )
       )
 
-      setUnreadCount((prev) => Math.max(prev - 1, 0))
+      setUnreadCount((prev) => Math.max(Number(prev) - 1, 0))
     } catch (error) {
       console.log("Mark notification as read error:", error)
     }
   }
 
-  const markAllNotificationsAsRead = async () => {
+  const markAllNotificationsAsRead = async (e) => {
+    e?.stopPropagation()
+
     try {
       const response = await apiFetch("/api/Notifications/mark-all-as-read", {
         method: "PUT",
@@ -184,6 +257,11 @@ const Navbar = () => {
           Accept: "*/*",
         },
       })
+
+      if (response.status === 401 || response.status === 403) {
+        resetAuthState()
+        return
+      }
 
       if (!response.ok) return
 
@@ -202,12 +280,28 @@ const Navbar = () => {
   }
 
   useEffect(() => {
-    const currentToken = getAccessToken()
-    setToken(currentToken)
+    syncAuthState()
+  }, [])
 
-    if (currentToken) {
-      fetchUserProfile(currentToken)
-      fetchUnreadCount()
+  useEffect(() => {
+    const handleFocus = () => {
+      syncAuthState()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        syncAuthState()
+      }
+    }
+
+    window.addEventListener("focus", handleFocus)
+    window.addEventListener("pageshow", handleFocus)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener("focus", handleFocus)
+      window.removeEventListener("pageshow", handleFocus)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
   }, [])
 
@@ -217,15 +311,13 @@ const Navbar = () => {
         setIsProfileOpen(false)
       }
 
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(e.target)
-      ) {
+      if (!e.target.closest("[data-notification-root='true']")) {
         setIsNotificationOpen(false)
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside)
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
@@ -260,13 +352,7 @@ const Navbar = () => {
   }
 
   const handleLogout = () => {
-    clearTokens()
-    setToken(null)
-    setProfileImageUrl("")
-    setNotifications([])
-    setUnreadCount(0)
-    setIsProfileOpen(false)
-    setIsNotificationOpen(false)
+    resetAuthState()
     setIsMenuOpen(false)
     setIsDesktopSearchOpen(false)
     setIsMobileSearchOpen(false)
@@ -342,7 +428,8 @@ const Navbar = () => {
 
   const getNotificationId = (item) => item?.id || item?.notificationId
 
-  const isNotificationRead = (item) => item?.isRead === true || item?.read === true
+  const isNotificationRead = (item) =>
+    item?.isRead === true || item?.read === true
 
   const navLinkClass =
     "relative inline-flex items-center text-[15px] font-medium tracking-[0.2px] transition-all duration-300 hover:text-yellow-400 after:absolute after:left-0 after:-bottom-[8px] after:h-[2px] after:w-full after:origin-left after:scale-x-0 after:rounded-full after:bg-yellow-400 after:transition-transform after:duration-300 hover:after:scale-x-100"
@@ -353,14 +440,61 @@ const Navbar = () => {
   const desktopContentHidden = isNavbarFading || isDesktopSearchOpen
   const mobileContentHidden = isNavbarFading || isMobileSearchOpen
 
+  const DarkModeButton = ({ mobileMenu = false }) => (
+    <button
+      className={`${
+        mobileMenu
+          ? "w-full flex items-center justify-between rounded px-4 py-3 border transition-all duration-300"
+          : "w-11 h-7 flex items-center bg-zinc-200 rounded-full p-1 cursor-pointer"
+      } ${
+        mobileMenu
+          ? isDarkmodeEnabled
+            ? "bg-[#2a2a2a] border-gray-700 hover:bg-[#333333]"
+            : "bg-white border-gray-200 hover:bg-gray-100"
+          : ""
+      }`}
+      onClick={toggleDarkmode}
+      type="button"
+    >
+      {mobileMenu && (
+        <span className="font-medium">
+          {isDarkmodeEnabled ? "Dark mode" : "Light mode"}
+        </span>
+      )}
+
+      <span
+        className={`flex items-center bg-zinc-200 rounded-full p-1 ${
+          mobileMenu ? "w-11 h-7" : "w-full h-full"
+        }`}
+      >
+        <span
+          className={`flex items-center justify-center bg-white w-5 h-5 rounded-full shadow-md transform duration-300 ${
+            isDarkmodeEnabled ? "translate-x-4" : ""
+          }`}
+        >
+          {isDarkmodeEnabled ? (
+            <img src={Moon} alt="Moon" className="w-3 h-3" />
+          ) : (
+            <img src={Sunny} alt="Sunny" className="w-3 h-3" />
+          )}
+        </span>
+      </span>
+    </button>
+  )
+
   const NotificationButton = ({ mobile = false }) => {
     if (!token) return null
 
     return (
-      <div className="relative z-[130]" ref={mobile ? null : notificationRef}>
+      <div
+        data-notification-root="true"
+        className="relative z-[130]"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
-          onClick={openNotifications}
+          onClick={(e) => openNotifications(e)}
           className={`${
             mobile ? "w-10 h-10" : "w-11 h-11"
           } relative flex items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 ${
@@ -371,9 +505,13 @@ const Navbar = () => {
         >
           <FiBell className={`${mobile ? "text-[18px]" : "text-[20px]"}`} />
 
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
-              {unreadCount > 99 ? "99+" : unreadCount}
+          {Number(unreadCount) > 0 && (
+            <span
+              className={`absolute -top-1.5 -right-1.5 z-[999] min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 ${
+                isDarkmodeEnabled ? "border-[#222222]" : "border-white"
+              }`}
+            >
+              {Number(unreadCount) > 99 ? "99+" : Number(unreadCount)}
             </span>
           )}
         </button>
@@ -401,13 +539,13 @@ const Navbar = () => {
                   isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
                 }`}
               >
-                {unreadCount > 0
+                {Number(unreadCount) > 0
                   ? `${unreadCount} oxunmamış bildiriş`
                   : "Yeni bildiriş yoxdur"}
               </p>
             </div>
 
-            {unreadCount > 0 && (
+            {Number(unreadCount) > 0 && (
               <button
                 type="button"
                 onClick={markAllNotificationsAsRead}
@@ -444,7 +582,10 @@ const Navbar = () => {
                   <button
                     key={notificationId || index}
                     type="button"
-                    onClick={() => !read && markNotificationAsRead(notificationId)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (!read) markNotificationAsRead(notificationId)
+                    }}
                     className={`w-full text-left px-4 py-3 border-b last:border-b-0 transition ${
                       isDarkmodeEnabled
                         ? "border-gray-700 hover:bg-[#2f2f2f]"
@@ -483,9 +624,9 @@ const Navbar = () => {
                                 : "text-gray-400"
                             }`}
                           >
-                            {new Date(item.createdAt || item.date).toLocaleString(
-                              "az-AZ"
-                            )}
+                            {new Date(
+                              item.createdAt || item.date
+                            ).toLocaleString("az-AZ")}
                           </p>
                         )}
                       </div>
@@ -521,7 +662,11 @@ const Navbar = () => {
               className="flex items-center gap-3 shrink-0"
             >
               <div className="w-13 h-13 rounded-full overflow-hidden shadow-md">
-                <img src={Logo} alt="Logo" className="w-full h-full object-cover" />
+                <img
+                  src={Logo}
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               <div className="flex items-center text-xl font-semibold">
@@ -539,7 +684,11 @@ const Navbar = () => {
                   : "opacity-100 translate-y-0"
               }`}
             >
-              <Link to="/" onClick={clearSearchAndCloseMenu} className={navLinkClass}>
+              <Link
+                to="/"
+                onClick={clearSearchAndCloseMenu}
+                className={navLinkClass}
+              >
                 Ana səhifə
               </Link>
 
@@ -581,7 +730,11 @@ const Navbar = () => {
                     : "w-[48px] max-w-[48px]"
                 }`}
               >
-                <img src={SearchIcon} alt="Search" className="absolute left-4 w-4 h-4 opacity-70" />
+                <img
+                  src={SearchIcon}
+                  alt="Search"
+                  className="absolute left-4 w-4 h-4 opacity-70"
+                />
 
                 <input
                   ref={desktopSearchInputRef}
@@ -619,7 +772,10 @@ const Navbar = () => {
                     </button>
                   )}
 
-                  <button type="submit" className="px-4 py-2 rounded-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition"
+                  >
                     Axtar
                   </button>
                 </div>
@@ -643,25 +799,14 @@ const Navbar = () => {
                   : "bg-white border-gray-300 hover:border-yellow-500"
               }`}
             >
-              <img src={SearchIcon} alt="Search" className="w-5 h-5 opacity-80" />
+              <img
+                src={SearchIcon}
+                alt="Search"
+                className="w-5 h-5 opacity-80"
+              />
             </button>
 
-            <button
-              className="w-11 h-7 flex items-center bg-zinc-200 rounded-full p-1 cursor-pointer"
-              onClick={toggleDarkmode}
-            >
-              <div
-                className={`flex items-center justify-center bg-white w-5 h-5 rounded-full shadow-md transform duration-300 ${
-                  isDarkmodeEnabled ? "translate-x-4" : ""
-                }`}
-              >
-                {isDarkmodeEnabled ? (
-                  <img src={Moon} alt="Moon" className="w-3 h-3" />
-                ) : (
-                  <img src={Sunny} alt="Sunny" className="w-3 h-3" />
-                )}
-              </div>
-            </button>
+            <DarkModeButton />
 
             <NotificationButton />
 
@@ -681,14 +826,24 @@ const Navbar = () => {
                   >
                     {profileImageUrl ? (
                       <img
-
                         src={getFileUrl(profileImageUrl)}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0"
+                        />
                       </svg>
                     )}
                   </button>
@@ -708,7 +863,9 @@ const Navbar = () => {
                       to="/profile"
                       onClick={clearSearchAndCloseMenu}
                       className={`block px-4 py-3 transition ${
-                        isDarkmodeEnabled ? "hover:bg-[#2f2f2f]" : "hover:bg-gray-100"
+                        isDarkmodeEnabled
+                          ? "hover:bg-[#2f2f2f]"
+                          : "hover:bg-gray-100"
                       }`}
                     >
                       Profil
@@ -734,7 +891,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="flex lg:hidden items-center gap-3 sm:gap-4 ml-auto" ref={notificationRef}>
+          <div className="flex lg:hidden items-center gap-3 sm:gap-4 ml-auto">
             {!mobileContentHidden && (
               <>
                 <button
@@ -746,27 +903,14 @@ const Navbar = () => {
                       : "bg-white border-gray-300 hover:border-yellow-500"
                   }`}
                 >
-                  <img src={SearchIcon} alt="Search" className="w-[18px] h-[18px] opacity-80" />
+                  <img
+                    src={SearchIcon}
+                    alt="Search"
+                    className="w-[18px] h-[18px] opacity-80"
+                  />
                 </button>
 
-                <button
-                  className="w-11 h-7 flex items-center bg-zinc-200 rounded-full p-1 cursor-pointer"
-                  onClick={toggleDarkmode}
-                >
-                  <div
-                    className={`flex items-center justify-center bg-white w-5 h-5 rounded-full shadow-md transform duration-300 ${
-                      isDarkmodeEnabled ? "translate-x-4" : ""
-                    }`}
-                  >
-                    {isDarkmodeEnabled ? (
-                      <img src={Moon} alt="Moon" className="w-3 h-3" />
-                    ) : (
-                      <img src={Sunny} alt="Sunny" className="w-3 h-3" />
-                    )}
-                  </div>
-                </button>
-
-                <NotificationButton mobile />
+                {token ? <NotificationButton mobile /> : <DarkModeButton />}
 
                 {token ? (
                   <button
@@ -787,8 +931,19 @@ const Navbar = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0"
+                        />
                       </svg>
                     )}
                   </button>
@@ -798,7 +953,7 @@ const Navbar = () => {
                     onClick={clearSearchAndCloseMenu}
                     className="relative overflow-hidden inline-block px-4 py-2 rounded bg-yellow-400 text-black font-bold shadow-md hover:shadow-xl hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ease-in-out before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-white/30 before:skew-x-12 before:transition-all before:duration-500 hover:before:left-[120%]"
                   >
-                    <span className="relative z-10">Giriş et</span>
+                    <span className="relative z-10">Giriş</span>
                   </Link>
                 )}
               </>
@@ -813,7 +968,10 @@ const Navbar = () => {
         } ${isDarkmodeEnabled ? "bg-[#222222]" : "bg-gray-50"}`}
       >
         <div className="px-4 py-4">
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex items-center gap-2"
+          >
             <div
               className={`relative flex-1 flex items-center rounded-full border shadow-sm overflow-hidden transition-all duration-500 ease-out ${
                 isSearchFocused
@@ -825,7 +983,11 @@ const Navbar = () => {
                 isMobileSearchOpen ? "w-full" : "w-[48px]"
               }`}
             >
-              <img src={SearchIcon} alt="Search" className="absolute left-4 w-4 h-4 opacity-70" />
+              <img
+                src={SearchIcon}
+                alt="Search"
+                className="absolute left-4 w-4 h-4 opacity-70"
+              />
 
               <input
                 ref={mobileSearchInputRef}
@@ -843,7 +1005,10 @@ const Navbar = () => {
               />
             </div>
 
-            <button type="submit" className="px-4 h-[44px] rounded-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition">
+            <button
+              type="submit"
+              className="px-4 h-[44px] rounded-full bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition"
+            >
               Axtar
             </button>
 
@@ -865,12 +1030,16 @@ const Navbar = () => {
       <div
         className={`lg:hidden overflow-hidden transition-all duration-300 ${
           isMenuOpen && !isMobileSearchOpen
-            ? "max-h-[600px] opacity-100"
+            ? "max-h-[680px] opacity-100"
             : "max-h-0 opacity-0"
         } ${isDarkmodeEnabled ? "bg-[#222222]" : "bg-gray-50"}`}
       >
         <div className="px-4 py-4 flex flex-col gap-4">
-          <Link to="/" onClick={clearSearchAndCloseMenu} className={mobileNavLinkClass}>
+          <Link
+            to="/"
+            onClick={clearSearchAndCloseMenu}
+            className={mobileNavLinkClass}
+          >
             Ana səhifə
           </Link>
 
@@ -892,9 +1061,15 @@ const Navbar = () => {
 
           {token ? (
             <>
-              <Link to="/profile" onClick={clearSearchAndCloseMenu} className={mobileNavLinkClass}>
+              <Link
+                to="/profile"
+                onClick={clearSearchAndCloseMenu}
+                className={mobileNavLinkClass}
+              >
                 Profil
               </Link>
+
+              <DarkModeButton mobileMenu />
 
               <button
                 onClick={handleLogout}
@@ -909,7 +1084,7 @@ const Navbar = () => {
               onClick={clearSearchAndCloseMenu}
               className="group relative overflow-hidden block w-full text-center bg-yellow-400 text-black font-bold rounded px-4 py-2 transition-all duration-300 hover:bg-yellow-500 hover:-translate-y-[2px] hover:shadow-lg"
             >
-              <span className="relative z-10">Giriş et</span>
+              <span className="relative z-10">Giriş</span>
             </Link>
           )}
         </div>

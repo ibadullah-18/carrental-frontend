@@ -5,7 +5,6 @@ import { useDarkmode } from "../stores/useDarkmode"
 import { apiFetch } from "../utils/apiFetch"
 import defaultImage from "../assets/download.png"
 
-
 const EyeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
     <path
@@ -75,14 +74,14 @@ const ReportIcon = () => (
 
 const InfoCard = ({ icon, label, value, dark }) => (
   <div
-    className={`group rounded-2xl sm:rounded-3xl p-3 sm:p-4 border transition duration-300 hover:-translate-y-1 hover:shadow-xl ${
+    className={`group rounded-xl sm:rounded-2xl p-3 sm:p-4 border transition duration-300 hover:-translate-y-1 hover:shadow-xl ${
       dark
         ? "bg-[#181818] border-white/10 hover:bg-[#202020]"
         : "bg-white border-black/10 hover:bg-[#fafafa]"
     }`}
   >
     <div className="flex items-center gap-2.5 sm:gap-3">
-      <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-yellow-400 text-black flex items-center justify-center shadow-md flex-shrink-0">
+      <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-yellow-400 text-black flex items-center justify-center shadow-md flex-shrink-0">
         {icon}
       </div>
 
@@ -101,7 +100,7 @@ const InfoCard = ({ icon, label, value, dark }) => (
 
 const PlateBox = ({ plateNumber, dark }) => (
   <div
-    className={`rounded-3xl overflow-hidden border shadow-lg ${
+    className={`rounded-2xl overflow-hidden border shadow-lg ${
       dark ? "bg-[#181818] border-white/10" : "bg-white border-black/10"
     }`}
   >
@@ -155,6 +154,7 @@ const Details = () => {
   const [error, setError] = useState("")
   const [activeIndex, setActiveIndex] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
+  const [touchStartX, setTouchStartX] = useState(null)
 
   const [reasonType, setReasonType] = useState(1)
   const [reportDescription, setReportDescription] = useState("")
@@ -180,9 +180,7 @@ const Details = () => {
 
         const res = await apiFetch(`/api/Cars/${id}`)
 
-        if (!res.ok) {
-          throw new Error("Maşın tapılmadı")
-        }
+        if (!res.ok) throw new Error("Maşın tapılmadı")
 
         const data = await res.json()
         setCar(data)
@@ -241,86 +239,6 @@ const Details = () => {
     }
   }, [modalOpen])
 
-  const fetchMyReports = async () => {
-    try {
-      setMyReportsLoading(true)
-      setMyReportsError("")
-
-      const res = await apiFetch("/api/Reports/my-reports")
-
-      const text = await res.text()
-      const data = text ? JSON.parse(text) : null
-
-      console.log("MY REPORTS RESPONSE:", data)
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Reportlar yüklənmədi")
-      }
-
-      const reports = normalizeArray(data)
-
-      setMyReports(reports)
-    } catch (err) {
-      console.log("MY REPORTS ERROR:", err)
-      setMyReportsError(err.message || "Reportlar yüklənərkən xəta baş verdi")
-    } finally {
-      setMyReportsLoading(false)
-    }
-  }
-
-  const toggleMyReports = async () => {
-    const next = !myReportsOpen
-    setMyReportsOpen(next)
-
-    if (next) {
-      await fetchMyReports()
-    }
-  }
-
-  const submitReport = async (e) => {
-    e.preventDefault()
-
-    if (!reportDescription.trim()) {
-      setReportError("Zəhmət olmasa açıqlama yaz")
-      setReportMessage("")
-      return
-    }
-
-    try {
-      setReportLoading(true)
-      setReportError("")
-      setReportMessage("")
-
-      const res = await apiFetch("/api/Reports", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          carId: car?.id || id,
-          reasonType: Number(reasonType),
-          description: reportDescription.trim(),
-        }),
-      })
-
-      if (!res.ok) {
-        throw new Error("Report göndərilmədi")
-      }
-
-      setReportDescription("")
-      setReasonType(1)
-      setReportMessage("Report uğurla göndərildi")
-
-      if (myReportsOpen) {
-        await fetchMyReports()
-      }
-    } catch (err) {
-      setReportError(err.message || "Report göndərilərkən xəta baş verdi")
-    } finally {
-      setReportLoading(false)
-    }
-  }
-
   const media = useMemo(() => {
     const items = normalizeArray(
       car?.media ||
@@ -344,9 +262,7 @@ const Details = () => {
         )
 
         const thumbnailUrl = makeUrl(
-          item.thumbnailUrl ||
-            item.thumbUrl ||
-            item.previewUrl
+          item.thumbnailUrl || item.thumbUrl || item.previewUrl
         )
 
         return {
@@ -379,6 +295,92 @@ const Details = () => {
 
   const prevMedia = () => {
     setActiveIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1))
+  }
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX)
+  }
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return
+
+    const touchEndX = e.changedTouches[0].clientX
+    const diff = touchStartX - touchEndX
+
+    if (Math.abs(diff) > 45) {
+      if (diff > 0) nextMedia()
+      else prevMedia()
+    }
+
+    setTouchStartX(null)
+  }
+
+  const fetchMyReports = async () => {
+    try {
+      setMyReportsLoading(true)
+      setMyReportsError("")
+
+      const res = await apiFetch("/api/Reports/my-reports")
+      const text = await res.text()
+      const data = text ? JSON.parse(text) : null
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Reportlar yüklənmədi")
+      }
+
+      setMyReports(normalizeArray(data))
+    } catch (err) {
+      setMyReportsError(err.message || "Reportlar yüklənərkən xəta baş verdi")
+    } finally {
+      setMyReportsLoading(false)
+    }
+  }
+
+  const toggleMyReports = async () => {
+    const next = !myReportsOpen
+    setMyReportsOpen(next)
+
+    if (next) await fetchMyReports()
+  }
+
+  const submitReport = async (e) => {
+    e.preventDefault()
+
+    if (!reportDescription.trim()) {
+      setReportError("Zəhmət olmasa açıqlama yaz")
+      setReportMessage("")
+      return
+    }
+
+    try {
+      setReportLoading(true)
+      setReportError("")
+      setReportMessage("")
+
+      const res = await apiFetch("/api/Reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          carId: car?.id || id,
+          reasonType: Number(reasonType),
+          description: reportDescription.trim(),
+        }),
+      })
+
+      if (!res.ok) throw new Error("Report göndərilmədi")
+
+      setReportDescription("")
+      setReasonType(1)
+      setReportMessage("Report uğurla göndərildi")
+
+      if (myReportsOpen) await fetchMyReports()
+    } catch (err) {
+      setReportError(err.message || "Report göndərilərkən xəta baş verdi")
+    } finally {
+      setReportLoading(false)
+    }
   }
 
   const ownerName =
@@ -434,20 +436,36 @@ const Details = () => {
         <div className="max-w-[1250px] mx-auto">
           <div className="grid grid-cols-1 xl:grid-cols-[1.18fr_0.82fr] gap-5">
             <div
-              className={`rounded-[34px] p-4 border shadow-xl ${
+              className={`rounded-[18px] p-4 border shadow-xl ${
                 isDarkmodeEnabled
                   ? "bg-[#111] border-white/10"
                   : "bg-white border-black/10"
               }`}
             >
-              <div className="relative h-[230px] sm:h-[330px] lg:h-[430px] rounded-[28px] overflow-hidden bg-black group">
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                className="relative h-[230px] sm:h-[330px] lg:h-[430px] rounded-[16px] overflow-hidden bg-black group"
+              >
                 {activeMedia?.type === "video" ? (
-                  <video
-                    src={activeMedia.url}
-                    controls
-                    className="w-full h-full object-cover cursor-pointer"
+                  <div
                     onClick={() => setModalOpen(true)}
-                  />
+                    className="relative w-full h-full cursor-zoom-in"
+                  >
+                    <video
+                      src={activeMedia.url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-cover pointer-events-none"
+                    />
+
+                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/90 text-black flex items-center justify-center text-2xl sm:text-3xl shadow-xl">
+                        ▶
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <img
                     src={activeMedia.url}
@@ -458,7 +476,7 @@ const Details = () => {
                   />
                 )}
 
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
                   <div className="flex flex-wrap items-center gap-2">
                     {car.isVip && (
                       <span className="px-3 py-1.5 rounded-full bg-yellow-400 text-black text-xs font-black">
@@ -478,14 +496,14 @@ const Details = () => {
                   <>
                     <button
                       onClick={prevMedia}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/55 text-white text-3xl hover:bg-black transition"
+                      className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/55 text-white text-3xl hover:bg-black transition items-center justify-center"
                     >
                       ‹
                     </button>
 
                     <button
                       onClick={nextMedia}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/55 text-white text-3xl hover:bg-black transition"
+                      className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/55 text-white text-3xl hover:bg-black transition items-center justify-center"
                     >
                       ›
                     </button>
@@ -502,23 +520,21 @@ const Details = () => {
                       key={item.id || index}
                       type="button"
                       onClick={() => setActiveIndex(index)}
-                      className={`
-                        relative w-24 h-16 rounded-2xl flex-shrink-0 p-[2px]
-                        transition-all duration-300
-                        ${
-                          isSelected
-                            ? "bg-yellow-400 opacity-100 scale-105"
-                            : "bg-transparent opacity-65 hover:opacity-100 hover:scale-[1.02]"
-                        }
-                      `}
+                      className={`relative w-24 h-16 rounded-xl flex-shrink-0 p-[2px] transition-all duration-300 ${
+                        isSelected
+                          ? "bg-yellow-400 opacity-100 scale-105"
+                          : "bg-transparent opacity-65 hover:opacity-100 hover:scale-[1.02]"
+                      }`}
                     >
-                      <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-black">
+                      <div className="relative w-full h-full rounded-[10px] overflow-hidden bg-black">
                         {item.type === "video" ? (
                           <>
                             <video
                               src={item.url}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover pointer-events-none"
                               muted
+                              playsInline
+                              preload="metadata"
                             />
 
                             <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
@@ -543,7 +559,7 @@ const Details = () => {
             </div>
 
             <div
-              className={`rounded-[34px] p-5 sm:p-6 border shadow-xl relative overflow-hidden ${
+              className={`rounded-[18px] p-5 sm:p-6 border shadow-xl relative overflow-hidden ${
                 isDarkmodeEnabled
                   ? "bg-[#111] border-white/10"
                   : "bg-white border-black/10"
@@ -571,7 +587,7 @@ const Details = () => {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-yellow-400 text-black font-black shadow-md">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-yellow-400 text-black font-black shadow-md">
                     <EyeIcon />
                     <span>{car.viewCount ?? 0}</span>
                   </div>
@@ -586,7 +602,7 @@ const Details = () => {
 
                 <button
                   onClick={goOwnerProfile}
-                  className={`mt-5 w-full flex items-center gap-4 rounded-3xl p-3 border text-left transition duration-300 hover:-translate-y-1 ${
+                  className={`mt-5 w-full flex items-center gap-4 rounded-2xl p-3 border text-left transition duration-300 hover:-translate-y-1 ${
                     isDarkmodeEnabled
                       ? "bg-[#1b1b1b] border-white/10 hover:bg-[#222]"
                       : "bg-[#fafafa] border-black/10 hover:bg-[#f0f0f0]"
@@ -642,7 +658,7 @@ const Details = () => {
           </div>
 
           <div
-            className={`mt-4 rounded-[24px] p-4 sm:p-5 border shadow-xl ${
+            className={`mt-4 rounded-[16px] p-4 sm:p-5 border shadow-xl ${
               isDarkmodeEnabled
                 ? "bg-[#111] border-white/10"
                 : "bg-white border-black/10"
@@ -662,7 +678,7 @@ const Details = () => {
           </div>
 
           <div
-            className={`mt-4 max-w-[520px] rounded-[22px] p-4 border shadow-lg ${
+            className={`mt-4 max-w-[520px] rounded-[16px] p-4 border shadow-lg ${
               isDarkmodeEnabled
                 ? "bg-[#111] border-white/10"
                 : "bg-white border-black/10"
@@ -670,7 +686,7 @@ const Details = () => {
           >
             <div className="flex items-center justify-between gap-3 mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-yellow-400 text-black flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-yellow-400 text-black flex items-center justify-center">
                   <ReportIcon />
                 </div>
 
@@ -695,7 +711,7 @@ const Details = () => {
 
             {myReportsOpen && (
               <div
-                className={`mb-3 rounded-2xl border p-3 ${
+                className={`mb-3 rounded-xl border p-3 ${
                   isDarkmodeEnabled
                     ? "bg-[#181818] border-white/10"
                     : "bg-[#fafafa] border-black/10"
@@ -721,6 +737,7 @@ const Details = () => {
                         <p className="font-black text-xs">
                           {getReasonLabel(report.reasonType)}
                         </p>
+
                         <p className="text-xs opacity-70 mt-1">
                           {report.description || "Açıqlama yoxdur"}
                         </p>
@@ -806,26 +823,31 @@ const Details = () => {
               <>
                 <button
                   onClick={prevMedia}
-                  className="fixed left-5 top-1/2 -translate-y-1/2 z-[1000000] text-white text-7xl hover:scale-110 transition"
+                  className="hidden sm:block fixed left-5 top-1/2 -translate-y-1/2 z-[1000000] text-white text-7xl hover:scale-110 transition"
                 >
                   ‹
                 </button>
 
                 <button
                   onClick={nextMedia}
-                  className="fixed right-5 top-1/2 -translate-y-1/2 z-[1000000] text-white text-7xl hover:scale-110 transition"
+                  className="hidden sm:block fixed right-5 top-1/2 -translate-y-1/2 z-[1000000] text-white text-7xl hover:scale-110 transition"
                 >
                   ›
                 </button>
               </>
             )}
 
-            <div className="fixed inset-0 flex items-center justify-center p-6">
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="fixed inset-0 flex items-center justify-center p-4 sm:p-6"
+            >
               {activeMedia?.type === "video" ? (
                 <video
                   src={activeMedia.url}
                   controls
                   autoPlay
+                  playsInline
                   className="max-w-[96vw] max-h-[92vh] object-contain"
                 />
               ) : (
