@@ -88,7 +88,17 @@ const Search = () => {
             )
           }
 
-          setUsers(Array.isArray(data) ? data : [])
+          const activeUsers = Array.isArray(data)
+            ? data.filter(
+                (user) =>
+                  user.isBanned !== true &&
+                  user.emailConfirmed === true &&
+                  user.isDeleted !== true &&
+                  user.isProfilePublic === true
+              )
+            : []
+
+          setUsers(activeUsers)
           setCars([])
         }
 
@@ -295,7 +305,6 @@ const Search = () => {
                             <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-300 shrink-0 border-2 border-yellow-400/50">
                               {user.profileImageUrl ? (
                                 <img
-
                                   src={getFileUrl(user.profileImageUrl)}
                                   alt={user.fullName}
                                   className="w-full h-full object-cover"
