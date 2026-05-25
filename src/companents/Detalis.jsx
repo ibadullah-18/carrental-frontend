@@ -169,7 +169,7 @@ const Details = () => {
 
   const makeUrl = (path) => {
     if (!path) return ""
-    return path.startsWith("http") ? path : `https://showcarhub.com${path}`
+    return path.startsWith("http") ? path : `https://api.showcarhub.com${path}`
   }
 
   useEffect(() => {
