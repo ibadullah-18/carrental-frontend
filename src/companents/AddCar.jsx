@@ -177,20 +177,6 @@ const AddCar = () => {
     return "";
   };
 
-  const validateCard = () => {
-    const cleanCard = cardNumber.replace(/\D/g, "");
-
-    if (!cardName.trim()) return "Kart sahibinin adını daxil edin";
-    if (cleanCard.length !== 16) return "Kart nömrəsi 16 rəqəm olmalıdır";
-    if (!/^\d{2}\/\d{2}$/.test(cardExpire)) return "Bitmə tarixini MM/YY formatında daxil edin";
-    if (!/^\d{3,4}$/.test(cardCvv)) return "CVV düzgün deyil";
-
-    const [month] = cardExpire.split("/").map(Number);
-    if (month < 1 || month > 12) return "Ay düzgün deyil";
-
-    return "";
-  };
-
   const goToPayment = (e) => {
     e.preventDefault();
 
@@ -245,13 +231,6 @@ const AddCar = () => {
     setError("");
     setSuccess("");
 
-    const cardError = validateCard();
-
-    if (cardError) {
-      setError(cardError);
-      return;
-    }
-
     try {
       setPaying(true);
       setSubmitting(true);
@@ -293,7 +272,7 @@ const AddCar = () => {
 
       await uploadMedia(carId);
 
-      const paymentResponse = await apiFetch("/api/Payments/create", {
+      const paymentResponse = await apiFetch("/api/Payments/kapital/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -307,39 +286,31 @@ const AddCar = () => {
       const paymentData = await paymentResponse.json().catch(() => null);
 
       if (!paymentResponse.ok) {
-        throw new Error(getErrorMessage(paymentData, "Ödəniş yaradılmadı"));
+        throw new Error(
+          getErrorMessage(paymentData, "Kapital Bank ödənişi yaradılmadı")
+        );
       }
 
       const newPaymentId =
-        extractId(paymentData, ["id", "paymentId", "Id", "PaymentId"]) ||
+        extractId(paymentData, ["paymentId", "id", "PaymentId", "Id"]) ||
+        paymentData?.data?.paymentId ||
         paymentData?.data?.id;
+
+      const redirectUrl =
+        extractId(paymentData, ["redirectUrl", "RedirectUrl"]) ||
+        paymentData?.data?.redirectUrl;
 
       if (!newPaymentId) {
         throw new Error("Ödəniş yaradıldı, amma paymentId gəlmədi");
       }
 
-      setPaymentId(newPaymentId);
-
-      const mockResponse = await apiFetch("/api/Payments/mock-success", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          paymentId: newPaymentId,
-        }),
-      });
-
-      const mockData = await mockResponse.json().catch(() => null);
-
-      if (!mockResponse.ok) {
-        throw new Error(getErrorMessage(mockData, "Ödəniş təsdiqlənmədi"));
+      if (!redirectUrl) {
+        throw new Error("Kapital Bank ödəniş linki gəlmədi");
       }
 
-      setSuccess("Ödəniş uğurla tamamlandı. Maşın platformaya əlavə olundu.");
-      setStep("success");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setPaymentId(newPaymentId);
+
+      window.location.href = redirectUrl;
     } catch (err) {
       setError(err.message || "Əməliyyat zamanı xəta baş verdi");
     } finally {
@@ -349,78 +320,79 @@ const AddCar = () => {
   };
 
   const downloadReceipt = async () => {
-  if (!paymentId) return;
+    if (!paymentId) return;
 
-  try {
-    setError("");
+    try {
+      setError("");
 
-    const response = await apiFetch(`/api/Payments/${paymentId}/receipt`, {
-      method: "GET",
-      headers: {
-        Accept: "*/*",
-      },
-    });
+      const response = await apiFetch(`/api/Payments/${paymentId}/receipt`, {
+        method: "GET",
+        headers: {
+          Accept: "*/*",
+        },
+      });
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      throw new Error(getErrorMessage(data, "Çek endirilmədi"));
-    }
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(getErrorMessage(data, "Çek endirilmədi"));
+      }
 
-    const contentType = response.headers.get("content-type") || "";
+      const contentType = response.headers.get("content-type") || "";
 
-    let blob;
-    let fileName = `MyCar-payment-${paymentId}`;
+      let blob;
+      let fileName = `MyCar-payment-${paymentId}`;
 
-    if (contentType.includes("application/pdf")) {
-      blob = await response.blob();
-      fileName += ".pdf";
-    } else if (contentType.includes("text/html")) {
-      blob = await response.blob();
-      fileName += ".html";
-    } else if (contentType.includes("application/json")) {
-      const data = await response.json();
+      if (contentType.includes("application/pdf")) {
+        blob = await response.blob();
+        fileName += ".pdf";
+      } else if (contentType.includes("text/html")) {
+        blob = await response.blob();
+        fileName += ".html";
+      } else if (contentType.includes("application/json")) {
+        const data = await response.json();
 
-      const receiptText = `
+        const receiptText = `
 MyCar Ödəniş Çeki
 
 Ödəniş ID: ${paymentId}
 Status: ${data?.status || data?.paymentStatus || "Uğurlu"}
 Məbləğ: ${data?.amount || selectedPackage?.price || ""} ${
-        data?.currency || selectedPackage?.currency || "AZN"
-      }
+          data?.currency || selectedPackage?.currency || "AZN"
+        }
 Paket: ${selectedPackage?.name || ""}
 Maşın: ${brand} ${model}
 Dövlət nömrəsi: ${plateNumber}
 Tarix: ${new Date().toLocaleString("az-AZ")}
 
 MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
-      `.trim();
+        `.trim();
 
-      blob = new Blob([receiptText], {
-        type: "text/plain;charset=utf-8",
-      });
+        blob = new Blob([receiptText], {
+          type: "text/plain;charset=utf-8",
+        });
 
-      fileName += ".txt";
-    } else {
-      blob = await response.blob();
-      fileName += ".txt";
+        fileName += ".txt";
+      } else {
+        blob = await response.blob();
+        fileName += ".txt";
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = fileName;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || "Çek endirilərkən xəta baş verdi");
     }
+  };
 
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = fileName;
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    setError(err.message || "Çek endirilərkən xəta baş verdi");
-  }
-};
   const inputClassName = `w-full h-[48px] px-4 rounded-xl outline-none border transition ${
     isDarkmodeEnabled
       ? "bg-[#171717] border-white/15 text-white placeholder-gray-400 focus:border-red-500"
@@ -784,7 +756,7 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                   className={`rounded-[26px] border p-5 sm:p-6 ${cardClassName}`}
                 >
                   <h2 className="text-xl sm:text-2xl font-bold mb-2">
-                    Kart məlumatları
+                    Kapital Bank ödənişi
                   </h2>
 
                   <p
@@ -792,14 +764,17 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                       isDarkmodeEnabled ? "text-gray-400" : "text-gray-500"
                     }`}
                   >
-                    Bu hissə hazırda test ödəniş üçündür. Real ödəniş üçün
-                    BirBank inteqrasiyası qoşulanda eyni dizayn saxlanıla bilər.
+                    Kart məlumatları Kapital Bank-ın təhlükəsiz ödəniş
+                    səhifəsində daxil ediləcək. Buradan davam etdikdən sonra
+                    bank səhifəsinə yönləndiriləcəksiniz.
                   </p>
 
                   <div className="rounded-[28px] p-5 sm:p-6 bg-gradient-to-br from-[#111] via-[#2a2a2a] to-[#8b0000] text-white shadow-2xl mb-5">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="text-xs opacity-70">MyCar kart ödənişi</p>
+                        <p className="text-xs opacity-70">
+                          ShowCarHub Kapital ödənişi
+                        </p>
                         <p className="text-xl font-black mt-1">
                           {selectedPackage?.price} {selectedPackage?.currency}
                         </p>
@@ -809,25 +784,25 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                     </div>
 
                     <p className="mt-8 text-2xl tracking-[4px] font-bold">
-                      {cardNumber || "0000 0000 0000 0000"}
+                      {cardNumber || "**** **** **** ****"}
                     </p>
 
                     <div className="flex justify-between mt-6 text-sm">
                       <div>
-                        <p className="opacity-60 text-xs">Kart sahibi</p>
+                        <p className="opacity-60 text-xs">Ödəniş sistemi</p>
                         <p className="font-bold uppercase">
-                          {cardName || "AD SOYAD"}
+                          Kapital Bank
                         </p>
                       </div>
 
                       <div>
-                        <p className="opacity-60 text-xs">Tarix</p>
-                        <p className="font-bold">{cardExpire || "MM/YY"}</p>
+                        <p className="opacity-60 text-xs">Status</p>
+                        <p className="font-bold">Redirect</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-60 pointer-events-none">
                     <div className="md:col-span-2">
                       <label className="block mb-2 text-sm font-medium">
                         Kart sahibinin adı
@@ -836,8 +811,9 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                         type="text"
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value)}
-                        placeholder="AD SOYAD"
+                        placeholder="Bank səhifəsində daxil ediləcək"
                         className={inputClassName}
+                        disabled
                       />
                     </div>
 
@@ -852,8 +828,9 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                         onChange={(e) =>
                           setCardNumber(formatCardNumber(e.target.value))
                         }
-                        placeholder="0000 0000 0000 0000"
+                        placeholder="Bank səhifəsində daxil ediləcək"
                         className={inputClassName}
+                        disabled
                       />
                     </div>
 
@@ -870,6 +847,7 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                         }
                         placeholder="MM/YY"
                         className={inputClassName}
+                        disabled
                       />
                     </div>
 
@@ -882,10 +860,13 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                         inputMode="numeric"
                         value={cardCvv}
                         onChange={(e) =>
-                          setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
+                          setCardCvv(
+                            e.target.value.replace(/\D/g, "").slice(0, 4)
+                          )
                         }
                         placeholder="***"
                         className={inputClassName}
+                        disabled
                       />
                     </div>
                   </div>
@@ -895,7 +876,9 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                     disabled={paying}
                     className="mt-5 group relative overflow-hidden w-full bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 disabled:opacity-60 font-bold shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
-                    {paying ? "Ödəniş edilir..." : "Ödənişi tamamla"}
+                    {paying
+                      ? "Kapital Bank-a yönləndirilir..."
+                      : "Kapital Bank ilə ödə"}
                   </button>
                 </div>
               </div>
@@ -920,8 +903,8 @@ MyCar platformasından istifadə etdiyiniz üçün təşəkkür edirik.
                 isDarkmodeEnabled ? "text-gray-300" : "text-gray-600"
               }`}
             >
-              Maşınınız MyCar platformasına əlavə olundu. İstəsəniz ödəniş çekini
-              endirə və ya maşınlarım bölməsinə keçə bilərsiniz.
+              Maşınınız ShowCarHub platformasına əlavə olundu. İstəsəniz ödəniş
+              çekini endirə və ya maşınlarım bölməsinə keçə bilərsiniz.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-7 max-w-[760px] mx-auto">

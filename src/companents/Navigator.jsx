@@ -1,27 +1,29 @@
-import { Route, Routes, useLocation } from "react-router-dom"
-import { useEffect } from "react"
+import { Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
-import Homepage from "../pages/Homepage"
-import Loginpage from "../pages/Loginpage"
-import Detailspage from "../pages/Detalispage"
-import Registerpage from "../pages/Registerpage"
-import AddCarpage from "../pages/AddCarpage"
-import Profilepage from "../pages/Profilepage"
-import Mycarspage from "../pages/Maycarspage"
-import UpdateCarpage from "../pages/UpdateCarpage"
-import Searchpage from "../pages/Searchpage"
-import PageTransition from "../companents/PageTransition"
-import ForgotPasswordpage from "../pages/ForgotPasswordpage"
+import Homepage from "../pages/Homepage";
+import Loginpage from "../pages/Loginpage";
+import Detailspage from "../pages/Detalispage";
+import Registerpage from "../pages/Registerpage";
+import AddCarpage from "../pages/AddCarpage";
+import Profilepage from "../pages/Profilepage";
+import Mycarspage from "../pages/Maycarspage";
+import UpdateCarpage from "../pages/UpdateCarpage";
+import Searchpage from "../pages/Searchpage";
+import PageTransition from "../companents/PageTransition";
+import ForgotPasswordpage from "../pages/ForgotPasswordpage";
 import OwnerProfilepage from "../pages/OwnerProfilepage";
 import SearchPlatepage from "../pages/SearchPlatepage";
+import PaymentSuccesspage from "../pages/PaymentSuccesspage";
+import PaymentFailedpage from "../pages/PaymentFailedpage";
 
 const Navigator = () => {
-  const location = useLocation()
-  const { pathname } = location
+  const location = useLocation();
+  const { pathname } = location;
 
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <Routes location={location} key={pathname}>
@@ -105,6 +107,7 @@ const Navigator = () => {
           </PageTransition>
         }
       />
+
       <Route
         path="/forgot-password"
         element={
@@ -113,6 +116,7 @@ const Navigator = () => {
           </PageTransition>
         }
       />
+
       <Route
         path="/owner-profile/:userId"
         element={
@@ -121,6 +125,7 @@ const Navigator = () => {
           </PageTransition>
         }
       />
+
       <Route
         path="/search-plate"
         element={
@@ -129,9 +134,26 @@ const Navigator = () => {
           </PageTransition>
         }
       />
-    </Routes>
-    
-  )
-}
 
-export default Navigator
+      <Route
+        path="/payment-success"
+        element={
+          <PageTransition direction="bottom">
+            <PaymentSuccesspage />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/payment-failed"
+        element={
+          <PageTransition direction="bottom">
+            <PaymentFailedpage />
+          </PageTransition>
+        }
+      />
+    </Routes>
+  );
+};
+
+export default Navigator;
